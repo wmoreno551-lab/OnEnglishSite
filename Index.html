@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      :root { 
+        --primary: #2c3e50; --secondary: #34495e; --accent: #3498db; --bg: #f0f4f8; --text: #333; 
+        --azul-medio: #1f335e; --azul-forte: #03224e; --azul-fraco: #3e4da2; --texto-alta: #c7ccea; --texto-baixa: #000000;
+        --verde-forte: #7ed957; --verde-claro: #c1ff72; --amarelo: #ffde59; --laranja: #ff914d; --vermelho-oficial: #ff5757;
+      }
+      body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+      #tela-login { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--azul-forte); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+      #tela-app-prof, #tela-app-aluno { display: none; width: 100%; height: 100%; position: relative; flex-direction: row; }
+      .login-box { background: var(--azul-medio); padding: 40px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 2px solid var(--azul-fraco); width: 90%; max-width: 400px; box-sizing: border-box;}
+      .login-box input { padding: 12px; width: 100%; border-radius: 4px; border: none; font-size: 16px; margin-top: 15px; box-sizing: border-box; }
+      .login-box button { padding: 12px; width: 100%; background: var(--verde-forte); color: var(--texto-baixa); border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; box-sizing: border-box;}
+      
+      .sidebar { width: 250px; background-color: var(--azul-forte); color: var(--texto-alta); display: flex; flex-direction: column; flex-shrink: 0; border-right: 2px solid var(--azul-fraco); overflow-y: auto; }
+      .sidebar::-webkit-scrollbar { width: 6px; }
+      .sidebar::-webkit-scrollbar-track { background: var(--azul-forte); }
+      .sidebar::-webkit-scrollbar-thumb { background: var(--azul-fraco); border-radius: 4px; }
+      .sidebar::-webkit-scrollbar-thumb:hover { background: var(--amarelo); }
+      .sidebar h2 { text-align: center; padding: 20px 0; margin: 0; font-size: 20px; border-bottom: 1px solid var(--azul-fraco); background: var(--azul-forte); }
+      .sidebar p.codigo { text-align: center; color: var(--amarelo); font-size: 12px; margin: 5px 0 15px 0; font-weight: bold;}
+      .sidebar button.menu-btn { background: none; border: none; color: var(--texto-alta); padding: 15px 20px; text-align: left; font-size: 15px; cursor: pointer; border-bottom: 1px solid var(--azul-fraco); transition: 0.2s;}
+      .sidebar button.menu-btn:hover, .sidebar button.menu-btn.active { background-color: var(--azul-fraco); font-weight: bold; color: #fff;}
+      .main-content { flex: 1; padding: 20px; overflow-y: auto; background-color: var(--bg); }
+      .section { display: none; }
+      .section.active { display: block; animation: fadeIn 0.4s; }
+      .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #ddd; color: var(--text); }
+      h1, h3 { margin-top: 0; color: var(--primary); }
+      .header-com-botao { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+      .header-com-botao h1, .header-com-botao h3 { margin: 0; border: none; padding: 0; }
+      .metricas-container { display: flex; gap: 20px; margin-top: 15px; margin-bottom: 15px; flex-wrap: wrap;}
+      .metrica-box { flex: 1; min-width: 200px; background: #e8f4f8; padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); color: var(--text); box-sizing: border-box;}
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background-color: white; }
+      th, td { padding: 10px; text-align: center; border: 1px solid #ddd; color: var(--text); }
+      th { background-color: var(--primary); color: white; }
+      
+      .tabela-container { overflow-x: auto; max-width: 100%; margin-bottom: 20px; -webkit-overflow-scrolling: touch; padding-bottom: 10px; }
+      .tabela-container::-webkit-scrollbar { height: 10px; }
+      .tabela-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 5px; }
+      .tabela-container::-webkit-scrollbar-thumb { background: #bbb; border-radius: 5px; }
+      .tabela-container::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+      .coluna-editavel { background-color: #fcfcda; border: 1px dashed #f39c12; transition: 0.3s; }
+      select.dropdown-editavel { width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px; font-family: inherit; font-size: 12px; cursor: pointer; font-weight: bold; background-color: #fff; color: var(--text);}
+      select.seletor-turmas-master { width: auto; min-width: 250px; font-size: 16px; padding: 10px 15px; font-weight: bold; background-color: var(--azul-forte); color: white; border: 2px solid var(--azul-fraco); border-radius: 6px; cursor: pointer; transition: 0.3s; box-sizing: border-box; }
+      
+      .aluno-card { min-width: 330px; border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #fff; flex-shrink: 0; box-sizing: border-box; transition: 0.3s;}
+      .aluno-card input[type="text"], .aluno-card textarea, .aluno-card input[type="number"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 13px; }
+      .aluno-card textarea { resize: vertical; min-height: 40px; }
+      
+      .lista-palavras { background: rgba(255,255,255,0.7); padding: 0; margin: 10px 0; list-style: none; height: 120px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; }
+      .lista-palavras li { display: flex; justify-content: space-between; align-items: center; padding: 5px 10px; border-bottom: 1px solid #ddd; font-size: 13px; color: #333;}
+      .btn-container { display: flex; justify-content: flex-end; gap: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+      .btn-salvar { background-color: #27ae60; color: white; border: none; padding: 10px 20px; font-size: 14px; border-radius: 5px; cursor: pointer; font-weight: bold;}
+      .tag-status { padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; display: inline-block;}
+      
+      #financeiro-prof .card { background-color: var(--azul-forte); color: var(--texto-alta); border: 1px solid var(--azul-fraco); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+      #financeiro-prof h1, #financeiro-prof h3 { color: var(--verde-claro); }
+      
+      #financeiro-prof table { background-color: var(--azul-forte); width: max-content; min-width: 100%; }
+      #financeiro-prof th { background-color: var(--azul-fraco); color: white; border-color: var(--azul-fraco); padding: 15px 12px; white-space: nowrap; }
+      #financeiro-prof td { background-color: var(--azul-forte); color: var(--texto-alta); border-color: var(--azul-fraco); padding: 12px 10px; white-space: nowrap; }
+      
+      @media (min-width: 769px) {
+        #financeiro-prof th:nth-child(2), #financeiro-prof td:nth-child(2) { position: sticky; left: 0; z-index: 10; box-shadow: 4px 0 6px -2px rgba(0,0,0,0.3); outline: 1px solid var(--azul-fraco); }
+        #financeiro-prof th:nth-child(2) { background-color: var(--azul-fraco); }
+        #financeiro-prof td:nth-child(2) { background-color: var(--azul-forte); }
+      }
+      
+      #financeiro-prof select.dropdown-editavel { background-color: #fff; color: var(--texto-baixa); border-color: var(--azul-fraco); padding: 10px 8px; min-width: 125px; font-size: 13px; }
+      #financeiro-prof select.select-status { min-width: 240px; }
+      #financeiro-prof select.select-prox-mes { min-width: 150px; }
+      .fin-header-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;}
+      .fin-card { background: rgba(62, 77, 162, 0.3); border: 1px solid var(--azul-fraco); padding: 15px; border-radius: 8px; border-left: 5px solid var(--azul-fraco); display: flex; flex-direction: column; justify-content: center; word-break: break-word;}
+      .fin-card span { font-size: 11px; color: var(--texto-alta); font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;}
+      .fin-card h2 { margin: 0; font-size: 24px; color: var(--amarelo); } 
+      
+      .modal { display: none; position: fixed; z-index: 10005; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+      .modal-content { background-color: var(--azul-forte); color: var(--texto-alta); padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 2px solid var(--azul-fraco); box-sizing: border-box;}
+      .close { color: var(--vermelho-oficial); float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+      
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+      .mobile-header { display: none; background: var(--azul-forte); padding: 15px 20px; color: var(--amarelo); font-size: 18px; font-weight: bold; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--azul-fraco); flex-shrink: 0; }
+      .btn-menu-mobile { background: var(--verde-forte); color: var(--texto-baixa); border: none; padding: 8px 12px; border-radius: 4px; font-size: 15px; font-weight: bold; cursor: pointer; }
+      .btn-fechar-menu { display: none; background: var(--vermelho-oficial); color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; text-align: center; width: 100%; font-size: 16px; }
+      .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; }
+      
+      .notebook-wrapper { display: flex; justify-content: center; margin-bottom: 40px; padding: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .livro-container { display: flex; flex-direction: row; width: 100%; max-width: 900px; min-width: 750px; aspect-ratio: 1.5; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+      .livro-metade { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+      .livro-metade.esquerda { padding: 8% 6% 8% 22%; }
+      .livro-metade.direita { padding: 8% 22% 8% 6%; }
+      .livro-metade::-webkit-scrollbar { width: 4px; }
+      .livro-metade::-webkit-scrollbar-track { background: transparent; }
+      .livro-metade::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+      .livro-titulo { text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 25px; color: #000; font-family: Arial, Helvetica, sans-serif; }
+      .livro-link { font-size: 11px; font-weight: bold; margin-bottom: 18px; text-decoration: none; display: block; font-family: Arial, Helvetica, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: 0.2s; color: inherit; }
+      .livro-link:hover { transform: translateX(5px); text-decoration: underline; }
+      
+      /* GAME MODAL CSS */
+      #modalGame { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); align-items: center; justify-content: center; }
+      .game-box { background: #fff; width: 90%; max-width: 450px; border-radius: 15px; padding: 30px 25px; text-align: center; box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; }
+      .game-header { font-size: 14px; font-weight: bold; color: #777; margin-bottom: 15px; }
+      .game-type { display: inline-block; padding: 6px 15px; background: var(--bg); border-radius: 20px; font-size: 12px; margin-bottom: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+      .game-question { font-size: 26px; font-weight: bold; margin-bottom: 25px; word-break: break-word; color: #222; }
+      .game-input { width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 8px; text-align: center; margin-bottom: 20px; box-sizing: border-box; outline: none; transition: 0.3s; }
+      .game-input:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(52, 152, 219, 0.3); }
+      .game-btn { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+      .game-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+      .game-feedback { margin-top: 15px; font-weight: bold; font-size: 16px; min-height: 24px; }
+      .btn-close-game { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 20px; cursor: pointer; color: #aaa; }
+      .btn-jogar { background: linear-gradient(135deg, #f1c40f, #f39c12); color: white; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; display: inline-block; text-transform: uppercase; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.4); transition: 0.3s; margin-top: 15px; }
+      .btn-jogar:hover { transform: scale(1.05); box-shadow: 0 6px 15px rgba(243, 156, 18, 0.6); }
+      .btn-audio-play { background: var(--accent); color: white; border: none; border-radius: 50%; width: 70px; height: 70px; font-size: 30px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; margin-bottom: 10px; display: inline-flex; align-items: center; justify-content: center; }
+      .btn-audio-play:hover { transform: scale(1.1); }
+      .btn-audio-play:active { transform: scale(0.95); }
+      .btn-mic { background: var(--vermelho-oficial); color: white; border: none; padding: 15px; width: 100%; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
+      .btn-mic:hover { opacity: 0.9; }
+      
+      @media (max-width: 768px) {
+        #tela-app-prof, #tela-app-aluno { flex-direction: column; }
+        .mobile-header { display: flex; }
+        .sidebar { position: fixed; left: -260px; top: 0; height: 100%; box-shadow: 2px 0 15px rgba(0,0,0,0.5); z-index: 1000; transition: left 0.3s ease; }
+        .sidebar.open { left: 0; }
+        .sidebar-overlay.show { display: block; }
+        .btn-fechar-menu { display: block; }
+        .main-content { padding: 10px; }
+        .notebook-wrapper { justify-content: flex-start; }
+        #financeiro-prof table, #financeiro-prof thead, #financeiro-prof tbody, #financeiro-prof tr, #financeiro-prof th, #financeiro-prof td { display: block; width: 100%; box-sizing: border-box; }
+        #financeiro-prof thead { display: none; } 
+        #financeiro-prof tr.aluno-row { display: flex; flex-wrap: wrap; background-color: #cfd8dc; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); color: #000; border: none; }
+        #financeiro-prof td { padding: 5px; border: none; background: transparent !important; text-align: left; color: #000 !important; }
+        #financeiro-prof td:nth-child(1) { order: 1; width: 100%; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px; margin-bottom: 10px; }
+        #financeiro-prof td:nth-child(1) > div { display: flex; justify-content: space-around; width: 100%; }
+        #financeiro-prof td:nth-child(1) button { flex: 1; margin: 0 5px; font-size: 13px; font-weight: bold; padding: 10px !important; white-space: normal; }
+        #financeiro-prof td:nth-child(2), #financeiro-prof td:nth-child(3), #financeiro-prof td:nth-child(4), #financeiro-prof td:nth-child(5), #financeiro-prof td:nth-child(6), #financeiro-prof td:nth-child(7) { order: 2; width: 100%; font-size: 15px; font-weight: bold; display: flex; align-items: center; white-space: normal; text-align: left; }
+        #financeiro-prof td:nth-child(2)::before { content: "número: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(3)::before { content: "matrícula: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(4)::before { content: "Responsável: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(5)::before { content: "aluno: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(6)::before { content: "vencimento: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(7)::before { content: "valor: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+        #financeiro-prof td:nth-child(7) { margin-bottom: 15px; }
+        #financeiro-prof td:nth-child(8), #financeiro-prof td:nth-child(9) { order: 3; width: 100%; text-align: center; }
+        #financeiro-prof td:nth-child(8)::before { content: "STATUS ATUAL"; display: block; font-weight: 900; font-size: 18px; margin-bottom: 5px; color: #000; text-transform: uppercase;}
+        #financeiro-prof td:nth-child(9)::before { content: "PRÓXIMO MÊS"; display: block; font-weight: 900; font-size: 18px; margin-top: 10px; margin-bottom: 5px; color: #000; text-transform: uppercase;}
+        #financeiro-prof td:nth-child(8) select, #financeiro-prof td:nth-child(9) select { width: 90%; margin: 0 auto; display: block; font-size: 14px; text-align: center; border: 1px solid #333; }
+        #financeiro-prof td:nth-child(9) { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); }
+        #financeiro-prof td:nth-child(n+10) { order: 4; width: 33.33%; text-align: center; padding: 5px 2px; flex-direction: column; justify-content: center; }
+        #financeiro-prof td:nth-child(n+10)::before { display: block; font-weight: 900; font-size: 13px; margin-bottom: 5px; color: #000; text-transform: uppercase; text-align: center; }
+        #financeiro-prof td:nth-child(10)::before { content: "JANEIRO"; } #financeiro-prof td:nth-child(11)::before { content: "FEVEREIRO"; } #financeiro-prof td:nth-child(12)::before { content: "MARÇO"; } #financeiro-prof td:nth-child(13)::before { content: "ABRIL"; } #financeiro-prof td:nth-child(14)::before { content: "MAIO"; } #financeiro-prof td:nth-child(15)::before { content: "JUNHO"; } #financeiro-prof td:nth-child(16)::before { content: "JULHO"; } #financeiro-prof td:nth-child(17)::before { content: "AGOSTO"; } #financeiro-prof td:nth-child(18)::before { content: "SETEMBRO"; } #financeiro-prof td:nth-child(19)::before { content: "OUTUBRO"; } #financeiro-prof td:nth-child(20)::before { content: "NOVEMBRO"; } #financeiro-prof td:nth-child(21)::before { content: "DEZEMBRO"; }
+        #financeiro-prof td:nth-child(n+10) select { width: 100%; font-size: 11px; padding: 8px 2px; text-align: center; border: 1px solid #777; border-radius: 4px; margin: 0; }
+      }
+      body.force-mobile #tela-app-prof, body.force-mobile #tela-app-aluno { flex-direction: column !important; }
+      body.force-mobile .mobile-header { display: flex !important; }
+      body.force-mobile .sidebar { position: fixed !important; left: -260px !important; top: 0 !important; height: 100% !important; box-shadow: 2px 0 15px rgba(0,0,0,0.5) !important; z-index: 1000 !important; transition: left 0.3s ease !important; }
+      body.force-mobile .sidebar.open { left: 0 !important; }
+      body.force-mobile .sidebar-overlay.show { display: block !important; }
+      body.force-mobile .btn-fechar-menu { display: block !important; }
+      body.force-mobile .main-content { padding: 10px !important; }
+      body.force-mobile .notebook-wrapper { justify-content: flex-start !important; }
+      body.force-pc #tela-app-prof, body.force-pc #tela-app-aluno { flex-direction: row !important; }
+      body.force-pc .mobile-header { display: none !important; }
+      body.force-pc .sidebar { position: relative !important; left: 0 !important; height: 100% !important; box-shadow: none !important; z-index: 1 !important; transition: none !important; }
+      body.force-pc .sidebar-overlay { display: none !important; }
+      body.force-pc .btn-fechar-menu { display: none !important; }
+      body.force-mobile #financeiro-prof th:nth-child(4), body.force-mobile #financeiro-prof td:nth-child(4) { position: static !important; box-shadow: none !important; outline: none !important; background-color: transparent !important; }
+      body.force-mobile #financeiro-prof table, body.force-mobile #financeiro-prof thead, body.force-mobile #financeiro-prof tbody, body.force-mobile #financeiro-prof tr, body.force-mobile #financeiro-prof th, body.force-mobile #financeiro-prof td { display: block; width: 100%; box-sizing: border-box; }
+      body.force-mobile #financeiro-prof thead { display: none; }
+      body.force-mobile #financeiro-prof tr.aluno-row { display: flex; flex-wrap: wrap; background-color: #cfd8dc; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); color: #000; border: none; }
+      body.force-mobile #financeiro-prof td { padding: 5px; border: none; background: transparent !important; text-align: left; color: #000 !important; }
+      body.force-mobile #financeiro-prof td:nth-child(1) { order: 1; width: 100%; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px; margin-bottom: 10px; }
+      body.force-mobile #financeiro-prof td:nth-child(1) > div { display: flex; justify-content: space-around; width: 100%; }
+      body.force-mobile #financeiro-prof td:nth-child(1) button { flex: 1; margin: 0 5px; font-size: 13px; font-weight: bold; padding: 10px !important; white-space: normal; }
+      body.force-mobile #financeiro-prof td:nth-child(2), body.force-mobile #financeiro-prof td:nth-child(3), body.force-mobile #financeiro-prof td:nth-child(4), body.force-mobile #financeiro-prof td:nth-child(5), body.force-mobile #financeiro-prof td:nth-child(6), body.force-mobile #financeiro-prof td:nth-child(7) { order: 2; width: 100%; font-size: 15px; font-weight: bold; display: flex; align-items: center; white-space: normal; text-align: left; }
+      body.force-mobile #financeiro-prof td:nth-child(2)::before { content: "número: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(3)::before { content: "matrícula: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(4)::before { content: "Responsável: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(5)::before { content: "aluno: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(6)::before { content: "vencimento: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(7)::before { content: "valor: "; font-size: 13px; margin-right: 5px; color: #333; font-weight: bold;}
+      body.force-mobile #financeiro-prof td:nth-child(7) { margin-bottom: 15px; }
+      body.force-mobile #financeiro-prof td:nth-child(8), body.force-mobile #financeiro-prof td:nth-child(9) { order: 3; width: 100%; text-align: center; }
+      body.force-mobile #financeiro-prof td:nth-child(8)::before { content: "STATUS ATUAL"; display: block; font-weight: 900; font-size: 18px; margin-bottom: 5px; color: #000; text-transform: uppercase;}
+      body.force-mobile #financeiro-prof td:nth-child(9)::before { content: "PRÓXIMO MÊS"; display: block; font-weight: 900; font-size: 18px; margin-top: 10px; margin-bottom: 5px; color: #000; text-transform: uppercase;}
+      body.force-mobile #financeiro-prof td:nth-child(8) select, body.force-mobile #financeiro-prof td:nth-child(9) select { width: 90%; margin: 0 auto; display: block; font-size: 14px; text-align: center; border: 1px solid #333; }
+      body.force-mobile #financeiro-prof td:nth-child(9) { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid rgba(0,0,0,0.1); }
+      body.force-mobile #financeiro-prof td:nth-child(n+10) { order: 4; width: 33.33%; text-align: center; padding: 5px 2px; flex-direction: column; justify-content: center; }
+      body.force-mobile #financeiro-prof td:nth-child(n+10)::before { display: block; font-weight: 900; font-size: 13px; margin-bottom: 5px; color: #000; text-transform: uppercase; text-align: center; }
+      body.force-mobile #financeiro-prof td:nth-child(10)::before { content: "JANEIRO"; } body.force-mobile #financeiro-prof td:nth-child(11)::before { content: "FEVEREIRO"; } body.force-mobile #financeiro-prof td:nth-child(12)::before { content: "MARÇO"; } body.force-mobile #financeiro-prof td:nth-child(13)::before { content: "ABRIL"; } body.force-mobile #financeiro-prof td:nth-child(14)::before { content: "MAIO"; } body.force-mobile #financeiro-prof td:nth-child(15)::before { content: "JUNHO"; } body.force-mobile #financeiro-prof td:nth-child(16)::before { content: "JULHO"; } body.force-mobile #financeiro-prof td:nth-child(17)::before { content: "AGOSTO"; } body.force-mobile #financeiro-prof td:nth-child(18)::before { content: "SETEMBRO"; } body.force-mobile #financeiro-prof td:nth-child(19)::before { content: "OUTUBRO"; } body.force-mobile #financeiro-prof td:nth-child(20)::before { content: "NOVEMBRO"; } body.force-mobile #financeiro-prof td:nth-child(21)::before { content: "DEZEMBRO"; }
+      body.force-mobile #financeiro-prof td:nth-child(n+10) select { width: 100%; font-size: 11px; padding: 8px 2px; text-align: center; border: 1px solid #777; border-radius: 4px; margin: 0; }
+      body.force-pc #financeiro-prof table { display: table !important; width: max-content !important; min-width: 100% !important; }
+      body.force-pc #financeiro-prof thead { display: table-header-group !important; }
+      body.force-pc #financeiro-prof tbody { display: table-row-group !important; }
+      body.force-pc #financeiro-prof tr { display: table-row !important; background: transparent !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; border: none !important; border-radius: 0 !important; }
+      body.force-pc #financeiro-prof th, body.force-pc #financeiro-prof td { display: table-cell !important; width: auto !important; margin: 0 !important; padding: 12px 10px !important; text-align: center !important; font-size: 13px !important; white-space: nowrap !important; border: 1px solid var(--azul-fraco) !important; background-color: var(--azul-forte) !important; color: var(--texto-alta) !important; font-weight: normal !important; }
+      body.force-pc #financeiro-prof th { background-color: var(--azul-fraco) !important; color: white !important; font-weight: bold !important; padding: 15px 12px !important; }
+      body.force-pc #financeiro-prof td::before { display: none !important; content: none !important; }
+      body.force-pc #financeiro-prof td:nth-child(n) { order: unset !important; flex-direction: unset !important; justify-content: unset !important; }
+      body.force-pc #financeiro-prof td:nth-child(1) > div { justify-content: center !important; width: auto !important; }
+      body.force-pc #financeiro-prof td:nth-child(1) button { flex: none !important; margin: 0 !important; padding: 5px 10px !important; }
+      body.force-pc #financeiro-prof td:nth-child(2), body.force-pc #financeiro-prof th:nth-child(2) { position: sticky !important; left: 0 !important; z-index: 10 !important; box-shadow: 4px 0 6px -2px rgba(0,0,0,0.3) !important; outline: 1px solid var(--azul-fraco) !important; }
+      body.force-pc #financeiro-prof td:nth-child(2) { background-color: var(--azul-forte) !important; }
+      body.force-pc #financeiro-prof th:nth-child(2) { background-color: var(--azul-fraco) !important; }
+      body.force-pc #financeiro-prof td:nth-child(4) { white-space: normal !important; min-width: 200px !important; text-align: left !important; font-weight: bold !important; }
+      body.force-pc #financeiro-prof td:nth-child(5) { white-space: normal !important; min-width: 200px !important; text-align: left !important; }
+      body.force-pc #financeiro-prof td select { display: inline-block !important; width: auto !important; margin: 0 !important; min-width: 125px !important; font-size: 13px !important; padding: 10px 8px !important; }
+    </style>
+  </head>
+  <body>
+    <!-- TELA ÚNICA DE LOGIN -->
+    <div id="tela-login">
+      <div class="login-box">
+        <h1 style="color:var(--amarelo); margin:0; font-size: 28px;">ON ENGLISH</h1>
+        <p style="color:var(--texto-alta); margin-bottom: 25px;">Plataforma de Acesso</p>
+        <input type="email" id="emailGeral" placeholder="Digite seu e-mail cadastrado" onkeypress="if(event.key==='Enter') { event.preventDefault(); document.getElementById('senhaGeral').focus(); }">
+        <input type="password" id="senhaGeral" placeholder="Digite sua senha" onkeypress="if(event.key==='Enter') fazerLoginUnificado()">
+        <button id="btnEntrar" onclick="fazerLoginUnificado()">Entrar no Sistema</button>
+        <span style="cursor:pointer; color:var(--amarelo); font-size:13px; display:block; margin-top:15px; text-decoration:underline;" onclick="abrirModalRecuperacao()">Esqueci minha senha</span>
+        <p id="msgErro" style="color: var(--vermelho-oficial); font-size: 14px; margin-top:15px;"></p>
+      </div>
+    </div>
+    
+    <!-- PORTAL DO PROFESSOR -->
+    <div id="tela-app-prof">
+      <div class="sidebar-overlay" id="sidebarOverlayProf" onclick="toggleSidebarProf()"></div>
+      <div class="sidebar" id="sidebarMenuProf">
+        <button class="btn-fechar-menu" onclick="toggleSidebarProf()">❌ Fechar Menu</button>
+        <h2 style="margin-top: 10px;">👨‍🏫 ON ENGLISH</h2>
+        <p class="codigo" id="sidebar-codigo-prof">Código: Carregando...</p>
+        <select class="select-layout" onchange="mudarLayout(this.value)" style="margin: 10px auto 20px auto; display: block; width: 90%; padding: 8px; border-radius: 4px; font-size: 14px; font-weight: bold; background: var(--bg); color: var(--text); border: 2px solid var(--azul-fraco); cursor: pointer;">
+    <option value="auto">Visão: Automática</option>
+    <option value="celular">📱 Forçar Celular</option>
+    <option value="pc">💻 Forçar PC</option>
+</select>
+<button id="btn-atualizar-prof" class="btn-salvar" onclick="atualizarPortal()" style="margin: 0 auto 20px auto; display: block; width: 90%; background: var(--verde-forte); color: var(--texto-baixa); border: 2px solid var(--azul-fraco); cursor: pointer;">🔄 Atualizar Dados</button>
+        <button class="menu-btn active" onclick="mostrarSecaoProf('professor', this)">👤 Meu Perfil</button>
+        <button class="menu-btn" onclick="mostrarSecaoProf('alunos', this)">🎓 Meus Alunos</button>
+        <button class="menu-btn" onclick="mostrarSecaoProf('turmas', this)">📚 Minhas Turmas</button>
+        <button class="menu-btn" onclick="mostrarSecaoProf('niveis-cadernos-prof', this); carregarCadernos('container-niveis-prof')">📒 Cadernos (Níveis)</button>
+        <button class="menu-btn" onclick="mostrarSecaoProf('financeiro-prof', this)">💰 Dados Financeiros</button>
+      </div>
+      <div class="mobile-header">
+         <span>ÁREA DO PROFESSOR</span>
+         <button class="btn-menu-mobile" onclick="toggleSidebarProf()">☰ Menu</button>
+      </div>
+      
+      <div class="main-content">
+          <div id="professor" class="section active card">
+            <div class="header-com-botao">
+               <h1 style="margin:0;">Visão Geral do Professor</h1>
+               <button class="btn-salvar" onclick="abrirModalPerfil()" style="margin:0; background-color: var(--amarelo); color: var(--texto-baixa);">✏️ Editar Informações</button>
+            </div>
+            <h3 style="margin-top: 10px;">1. Dados de Identificação</h3>
+            <div id="prof-identificacao">⏳ Carregando Perfil...</div>
+            <div class="header-com-botao mt-30">
+               <h3 style="margin:0;">2. Configuração das Turmas</h3>
+               <button class="btn-salvar" id="btnSalvarTurmas" onclick="salvarTurmas()" style="margin:0; background: var(--accent);">💾 Salvo Automático</button>
+            </div>
+            <div class="tabela-container" id="prof-turmas">⏳ Carregando...</div>
+          </div>
+          <div id="alunos" class="section card">
+            <div class="header-com-botao">
+               <h1 style="margin:0;">Gestão de Alunos (Acadêmico)</h1>
+               <button class="btn-salvar" id="btnSalvarAlunos" onclick="salvarAlunos()" style="margin:0; background: var(--accent);">💾 Salvo Automático</button>
+            </div>
+            <div class="tabela-container" id="dados-alunos">⏳ Carregando...</div>
+          </div>
+          <div id="turmas" class="section card">
+            <div style="display:flex; justify-content:flex-start; align-items:center; gap: 20px; border-bottom:2px solid #eee; padding-bottom:10px; margin-bottom:20px; flex-wrap: wrap;">
+               <h1 style="margin:0;">Painel da Turma</h1>
+               <select id="seletor-dinamico-turmas" class="seletor-turmas-master" onchange="carregarMetricasDaTurmaProf(this.value)"><option value="" disabled selected>⏳ Carregando...</option></select>
+            </div>
+            <div id="turma-cabecalho" class="metricas-container"></div>
+            <div class="metricas-container" id="metricas-extras-turma"></div>
+            
+            <div id="turma-corrida-prof"></div>
+            <div class="card" style="box-shadow:none; border:1px solid #ddd; padding:0; margin-top:20px;">
+               <div class="header-com-botao" style="padding:15px; margin:0; border-bottom:1px solid #eee; background-color:#f9fbfc; border-radius: 8px 8px 0 0;">
+                  <h3 style="margin:0;">📅 Cronograma de Aulas</h3>
+                  <button class="btn-salvar" id="btnSalvarCrono" onclick="salvarCronograma()" style="margin:0; padding:8px 15px; font-size:13px; max-width: 250px;">💾 Salvo Automático</button>
+               </div>
+               <div class="tabela-container" style="padding:15px;" id="turma-cronograma"></div>
+            </div>
+            <div class="card" style="box-shadow:none; border:1px solid #ddd; padding:0; overflow:hidden;">
+               <h3 style="padding:15px; margin:0;">🎓 Fichas Editáveis</h3>
+               <div id="turma-alunos" style="display:flex; overflow-x:auto; gap:20px; padding:0 15px 15px 15px; -webkit-overflow-scrolling: touch;"></div>
+            </div>
+          </div>
+          
+          <div id="niveis-cadernos-prof" class="section">
+             <div class="card" style="background-color: var(--bg); border: none; box-shadow: none;">
+                <h1 style="text-align: center; margin-bottom: 30px;">📒 Cadernos de Níveis</h1>
+                <div id="container-niveis-prof">⏳ Aguardando...</div>
+             </div>
+          </div>
+          
+          <div id="financeiro-prof" class="section">
+            <div class="card">
+              <div class="btn-container">
+                  <button class="btn-salvar" style="background: var(--vermelho-oficial); margin-right: 10px;" onclick="dispararTodosEmailsFin()">🚀 Disparar Mensagens</button>
+                  <button class="btn-salvar" id="btnSalvarFin" onclick="salvarFinanceiro()" style="background: var(--accent);">💾 Salvo Automático</button>
+              </div>
+              <h1 style="margin-bottom: 20px;">Dados Financeiros e Mensalidades</h1>
+              <div class="fin-header-grid" id="fin-header">
+                <div class="fin-card card-professor-info" style="border-left-color:var(--azul-fraco); grid-column: span 2;">
+                   <span>Dados de Identificação</span>
+                   <div style="font-size: 13px; color:var(--texto-alta); line-height: 1.6;">
+                      <strong>Código:</strong> <span id="fin-codigo">...</span><br>
+                      <strong>Professor:</strong> <span id="fin-nomeProf">...</span><br>
+                      <strong>PIX:</strong> <span id="fin-pix" style="word-break: break-all;">...</span>
+                   </div>
+                </div>
+                <div class="fin-card" style="border-left-color:var(--verde-forte);"><span>Total Alunos</span><h2 id="fin-alunos" style="color:var(--verde-forte);">...</h2></div>
+                <div class="fin-card" style="border-left-color:var(--verde-claro);"><span>Valor Esperado</span><h2 id="fin-esperado" style="color:var(--verde-claro);">...</h2></div>
+                <div class="fin-card" style="border-left-color:var(--vermelho-oficial);"><span>Valor Atrasado</span><h2 id="fin-atrasado" style="color:var(--vermelho-oficial);">...</h2></div>
+                <div class="fin-card" style="border-left-color:var(--amarelo);"><span>Valor Arrecadado</span><h2 id="fin-arrecadado" style="color:var(--amarelo);">...</h2></div>
+              </div>
+              <div class="tabela-container" id="tabela-meses-alunos">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ações</th><th>Nº</th><th>Matrícula</th><th>Responsável</th><th>Aluno(s)</th><th>Vencimento</th><th>Valor</th><th>Status Atual</th><th>Próx. Mês</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabela-financeiro"><tr><td colspan="21">⏳ Carregando planilhas financeiras...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
+    
+    <!-- PORTAL DO ALUNO -->
+    <div id="tela-app-aluno">
+      <div class="sidebar-overlay" id="sidebarOverlayAluno" onclick="toggleSidebarAluno()"></div>
+      
+      <div class="sidebar" id="sidebarMenuAluno">
+        <button class="btn-fechar-menu" onclick="toggleSidebarAluno()">❌ Fechar Menu</button>
+        <h2 style="margin-top: 10px;">🎓 ON ENGLISH</h2>
+        <select class="select-layout" onchange="mudarLayout(this.value)" style="margin: 10px auto 20px auto; display: block; width: 90%; padding: 8px; border-radius: 4px; font-size: 14px; font-weight: bold; background: var(--bg); color: var(--text); border: 2px solid var(--azul-fraco); cursor: pointer;">
+    <option value="auto">Visão: Automática</option>
+    <option value="celular">📱 Forçar Celular</option>
+    <option value="pc">💻 Forçar PC</option>
+</select>
+<button id="btn-atualizar-aluno" class="btn-salvar" onclick="atualizarPortal()" style="margin: 0 auto 20px auto; display: block; width: 90%; background: var(--verde-forte); color: var(--texto-baixa); border: 2px solid var(--azul-fraco); cursor: pointer;">🔄 Atualizar Dados</button>
+        <div id="lista-perfis-sidebar" style="margin-bottom: 15px; border-bottom: 1px solid var(--azul-fraco); padding-bottom: 15px; text-align: center;"></div>
+        <button class="menu-btn" id="btn-menu-boletim" onclick="mostrarSecaoAluno('boletim-aluno', this)" style="display:none;">📝 Meu Boletim</button>
+        <button class="menu-btn" id="btn-menu-niveis" onclick="mostrarSecaoAluno('niveis-cadernos-aluno', this); carregarCadernos('container-niveis-aluno')" style="display:none;">📒 Meus Cadernos (Níveis)</button>
+        <button class="menu-btn" id="btn-menu-fin" onclick="mostrarSecaoAluno('financeiro-aluno', this)" style="display:none;">💰 Mensalidades</button>
+        <button class="menu-btn" id="btn-menu-cadastro" onclick="mostrarSecaoAluno('cadastro-aluno', this)" style="display:none;">⚙️ Editar Cadastro</button>
+      </div>
+     <div class="mobile-header">
+    <span>ÁREA DO ALUNO</span>
+    <button class="btn-menu-mobile" onclick="toggleSidebarAluno()"> Menu</button>
+</div>
+      <div class="main-content">
+          <div id="boas-vindas-aluno" class="section active card" style="text-align: center; padding: 60px 20px;">
+             <h1 style="font-size: 32px; color: var(--azul-forte);">👋 Bem-vindo(a) à ON ENGLISH!</h1>
+             <p style="font-size: 18px; color: #555; margin-top: 15px;">Por favor, selecione um aluno no <strong>menu lateral</strong> para visualizar as notas e o cronograma de aulas.</p>
+          </div>
+          <div id="boletim-aluno" class="section card">
+            <h1>Visão Geral e Boletim</h1>
+            <div class="metricas-container" id="cabecalho-boletim">⏳ Carregando seus dados...</div>
+            <div id="detalhes-boletim"></div>
+            <hr style="border: 1px solid #eee; margin: 30px 0;">
+            <h1 style="margin-bottom: 20px;">📅 Cronograma da Turma</h1>
+            <div class="tabela-container" id="tabela-cronograma-aluno">⏳ Carregando...</div>
+          </div>
+          <div id="niveis-cadernos-aluno" class="section">
+             <div class="card" style="background-color: var(--bg); border: none; box-shadow: none;">
+                <h1 style="text-align: center; margin-bottom: 30px;">📒 Meus Cadernos de Estudos</h1>
+                <div id="container-niveis-aluno">⏳ Aguardando...</div>
+             </div>
+          </div>
+          <div id="financeiro-aluno" class="section card">
+            <h1>💰 Minhas Mensalidades</h1>
+            <div id="detalhes-financeiro-aluno">⏳ Carregando financeiro...</div>
+          </div>
+          <div id="cadastro-aluno" class="section card">
+            <h1 style="margin-bottom: 10px;">⚙️ Editar Meu Cadastro</h1>
+            <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+               Atualize suas informações pessoais abaixo. Para <strong>alterar sua senha</strong> de acesso, preencha os campos no fim do formulário.
+            </p>
+            <div id="form-cadastro-aluno">⏳ Carregando informações...</div>
+          </div>
+      </div>
+    </div>
+    
+    <!-- MODAL DE RECUPERAÇÃO DE SENHA -->
+    <div id="modalRecuperacao" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('modalRecuperacao').style.display='none'">&times;</span>
+        <h3 style="color: var(--amarelo); margin-top:0; border-bottom: 1px solid var(--azul-fraco); padding-bottom:10px;">Recuperar Senha</h3>
+        <p style="font-size: 14px; margin-bottom: 15px; color:var(--texto-alta);">Digite seu e-mail cadastrado. Enviaremos uma nova senha provisória para ele.</p>
+        <input type="email" id="emailRecuperacao" style="width:100%; padding:10px; margin-bottom:15px; border-radius:4px; border:none; box-sizing:border-box;" placeholder="Seu e-mail cadastrado">
+        <button class="btn-salvar" style="width:100%; background:var(--accent);" onclick="pedirRecuperacaoSenha()" id="btnRecuperarSenha">Enviar Nova Senha</button>
+        <p id="msgRecuperacao" style="font-size:13px; margin-top:10px; font-weight:bold;"></p>
+      </div>
+    </div>
+    <!-- MODAL DE EDIÇÃO DE PERFIL DO PROFESSOR -->
+    <div id="modalEdicaoPerfil" class="modal">
+      <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+        <span class="close" onclick="fecharModalPerfil()">&times;</span>
+        <h3 style="color: var(--amarelo); margin-top:0; border-bottom: 1px solid var(--azul-fraco); padding-bottom:10px; font-size: 18px;">✏ Editar Informações</h3>
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block; margin-top:10px;">E-mail:</label>
+        <input type="email" id="editEmail" style="width:100%; padding:10px; margin-bottom:10px; border-radius:4px; border:none; box-sizing:border-box;">
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">PIX:</label>
+        <input type="text" id="editPix" style="width:100%; padding:10px; margin-bottom:10px; border-radius:4px; border:none; box-sizing:border-box;">
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Link da Foto de Capa (Drive):</label>
+        <input type="text" id="editFoto" style="width:100%; padding:10px; margin-bottom:10px; border-radius:4px; border:none; box-sizing:border-box;">
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Data de Aniversário:</label>
+        <input type="text" id="editNascimento" placeholder="Ex: 10/10/1990" style="width:100%; padding:10px; margin-bottom:15px; border-radius:4px; border:none; box-sizing:border-box;">
+        
+        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 13px; color: var(--amarelo);">🔒 Alterar Senha de Acesso</h4>
+            <label style="color:var(--texto-alta); font-size:11px; font-weight:bold; display:block;">Senha Atual:</label>
+            <input type="password" id="editSenhaAtualProf" placeholder="Preencha apenas para alterar" style="width:100%; padding:8px; margin-bottom:10px; border-radius:4px; border:none; box-sizing:border-box;">
+            <label style="color:var(--texto-alta); font-size:11px; font-weight:bold; display:block;">Nova Senha:</label>
+            <input type="password" id="editNovaSenhaProf" placeholder="Deixe em branco para manter a atual" style="width:100%; padding:8px; margin-bottom:5px; border-radius:4px; border:none; box-sizing:border-box;">
+        </div>
+        <button class="btn-salvar" style="width:100%; min-width:100%;" onclick="salvarEdicaoPerfil()" id="btnSalvarPerfilEdit">💾 Salvar Alterações</button>
+      </div>
+    </div>
+    
+    <!-- MODAL DE EMAIL/WHATSAPP INDIVIDUAL DO FINANCEIRO -->
+    <div id="modalMensagemFin" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('modalMensagemFin').style.display='none'">&times;</span>
+        <h3 style="color: var(--amarelo); margin-top:0; border-bottom: 1px solid var(--azul-fraco); padding-bottom:10px; font-size: 18px;">✉️/💬 Enviar Mensagem</h3>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px;">
+                <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Para (E-mail):</label>
+                <input type="email" id="emailDestinoFin" style="width:100%; padding:10px; border-radius:4px; border:none; box-sizing:border-box;">
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Para (WhatsApp):</label>
+                <input type="text" id="whatsappDestinoFin" placeholder="Ex: 21999999999" style="width:100%; padding:10px; border-radius:4px; border:none; box-sizing:border-box;">
+            </div>
+        </div>
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Assunto (Apenas E-mail):</label>
+        <input type="text" id="emailAssuntoFin" value="ON ENGLISH - Atualização Financeira" style="width:100%; padding:10px; margin-bottom:10px; border-radius:4px; border:none; box-sizing:border-box;">
+        
+        <label style="color:var(--texto-alta); font-size:13px; font-weight:bold; display:block;">Mensagem:</label>
+        <textarea id="emailMensagemFin" rows="6" style="width:100%; padding:10px; margin-bottom:20px; border-radius:4px; border:none; box-sizing:border-box; font-family:inherit;"></textarea>
+        
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-salvar" style="flex: 1; min-width: 150px; background:var(--verde-forte); color:black;" onclick="dispararWhatsAppIndividual()" id="btnEnviarWhatsAppInd">💬 Enviar WhatsApp</button>
+            <button class="btn-salvar" style="flex: 1; min-width: 150px; background:var(--accent);" onclick="dispararEmailIndividual()" id="btnEnviarEmailInd">🚀 Enviar E-mail</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- MODAL DE EDICAO DO CADASTRO (PROFESSOR) -->
+    <div id="modalEdicaoCadastroProf" class="modal">
+      <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <span class="close" onclick="document.getElementById('modalEdicaoCadastroProf').style.display='none'">&times;</span>
+        <h3 style="color: var(--amarelo); margin-top:0; border-bottom: 1px solid var(--azul-fraco); padding-bottom:10px; font-size: 18px;">✏️ Editar Matrícula</h3>
+        <div id="formEditCadastroProfLoader">⏳ Carregando dados do servidor...</div>
+        <div id="formEditCadastroProfBody" style="display:none;">
+           <input type="hidden" id="editCadProfLinha">
+           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Matrícula (B):</label><div id="editCadProf_B" style="padding:6px 0; font-size:14px; font-weight:bold; color:#ccc;">-</div></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Data Matrícula (C):</label><div id="editCadProf_C" style="padding:6px 0; font-size:14px; font-weight:bold; color:#ccc;">-</div></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Valor (D):</label><input type="text" id="editCadProf_D" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Qtd Alunos (E):</label><input type="text" id="editCadProf_E" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Cliente/Responsável (F):</label><input type="text" id="editCadProf_F" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Nomes dos Alunos (G):</label><input type="text" id="editCadProf_G" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Aniversário (H):</label><input type="text" id="editCadProf_H" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">CPF (I):</label><input type="text" id="editCadProf_I" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">E-mail (J):</label><input type="text" id="editCadProf_J" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Telefone (K):</label><input type="text" id="editCadProf_K" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">CEP (L):</label><input type="text" id="editCadProf_L" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Endereço (M):</label><input type="text" id="editCadProf_M" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">País/Estado (N):</label><input type="text" id="editCadProf_N" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">Instagram (O):</label><input type="text" id="editCadProf_O" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               <div style="grid-column: span 2;"><label style="font-size:12px; font-weight:bold; color:var(--texto-alta);">TikTok (P):</label><input type="text" id="editCadProf_P" style="width:100%; padding:6px; border-radius:4px; border:none; color:#000;"></div>
+               
+               <div style="grid-column: span 2; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; margin-top: 10px;">
+                   <h4 style="margin: 0 0 5px 0; font-size: 13px; color: var(--amarelo);">🔒 Informações de Leitura</h4>
+                   <label style="font-size:11px; font-weight:bold; display:block; color:var(--texto-alta);">Como conheceu (Q):</label>
+                   <p id="viewCadProf_Q" style="font-size:13px; margin: 0 0 10px 0; color: #ccc;">-</p>
+                   <label style="font-size:11px; font-weight:bold; display:block; color:var(--texto-alta);">Contrato (R):</label>
+                   <p id="viewCadProf_R" style="font-size:13px; margin: 0; color: #ccc;">-</p>
+               </div>
+           </div>
+           <button class="btn-salvar" style="width:100%; min-width:100%; margin-top:20px;" onclick="salvarEdicaoCadastroProf()" id="btnSalvarCadProfSubmit">💾 Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+    
+        <!-- MODAL DE PRIMEIRO ACESSO (TROCA OBRIGATÓRIA DE SENHA) -->
+    <div id="modalPrimeiroAcesso" class="modal" style="z-index: 10010; background-color: rgba(3, 34, 78, 0.95);">
+      <div class="modal-content" style="max-width: 420px; text-align: center; border: 2px solid var(--amarelo); box-shadow: 0 8px 25px rgba(0,0,0,0.7);">
+        <h2 style="color: var(--amarelo); margin-top:0; font-size: 22px;">🔐 Primeiro Acesso</h2>
+        <p style="font-size: 14px; margin-bottom: 20px; color:var(--texto-alta); line-height: 1.5;">
+          Você entrou com a <strong>senha padrão (1111)</strong>.<br>
+          Para sua segurança e privacidade, você precisa <strong>cadastrar uma nova senha pessoal</strong> para liberar seu painel.
+        </p>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="color:var(--texto-alta); font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">Nova Senha Pessoal:</label>
+            <input type="password" id="primeiraNovaSenha" placeholder="Mínimo 4 caracteres" style="width:100%; padding:12px; border-radius:4px; border:none; box-sizing:border-box; font-size:15px; color:#000;">
+        </div>
+        <div style="text-align: left; margin-bottom: 20px;">
+            <label style="color:var(--texto-alta); font-size:12px; font-weight:bold; display:block; margin-bottom:5px;">Confirmar Nova Senha:</label>
+            <input type="password" id="primeiraConfirmaSenha" placeholder="Repita a nova senha" style="width:100%; padding:12px; border-radius:4px; border:none; box-sizing:border-box; font-size:15px; color:#000;">
+        </div>
+        <button class="btn-salvar" style="width:100%; background:var(--verde-forte); color:black; padding:14px; font-size:16px; font-weight:bold;" onclick="salvarSenhaPrimeiroAcesso()" id="btnSalvarPrimeiroAcesso">Salvar Senha e Liberar Acesso</button>
+        <p id="msgErroPrimeiroAcesso" style="font-size:13px; margin-top:12px; font-weight:bold; color:var(--vermelho-oficial); min-height:18px;"></p>
+      </div>
+    </div>
+    <!-- JOGO -->
+    <div id="modalGame">
+      <div class="game-box" id="gameBoxUi">
+         <button class="btn-close-game" onclick="fecharGame()">✖</button>
+         <div class="game-header" id="gameHeader">Missão 1 de 5</div>
+         <div class="game-type" id="gameTypeLabel" style="color: var(--accent);">TRADUÇÃO</div>
+         <div class="game-question" id="gameQuestion" style="min-height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center;">apple</div>
+         
+         <div id="containerSpeak" style="display:none; width:100%;">
+            <button class="btn-mic" id="btnGravarVoz" onclick="gravarPronunciaGame()">🎙️ Segurar para Falar</button>
+         </div>
+         <input type="text" id="gameInput" class="game-input" placeholder="Sua resposta aqui..." onkeypress="if(event.key==='Enter') checarRespostaGame()" autocomplete="off" autocorrect="off" spellcheck="false">
+         
+         <div id="gameBtnGroup" style="display:flex; gap:10px; margin-top:10px;">
+           <button class="game-btn" id="gameBtnPular" style="background: #bdc3c7; color: #333; flex: 1;" onclick="pularMissaoGame()">Pular</button>
+           <button class="game-btn" id="gameBtn" style="background: var(--accent); flex: 2;" onclick="checarRespostaGame()">Verificar</button>
+         </div>
+         
+         <div class="game-feedback" id="gameFeedback"></div>
+      </div>
+    </div>
+    
+    <!-- SCRIPT GERAL DO FRONTEND -->
+    <script type="text/javascript">
+      var meuTokenSeguranca = ""; 
+      var dadosGerais = {};
+      var dadosFinanceirosProf = [];
+      var jogosPendentes = [];
+      var jogoAtual = 0;
+      var pontosGanhos = 0;
+      var frasesCriadas = []; 
+      var palavrasAcertadas = []; 
+      var temaGameCor = "#3498db";
+      var idxPerfilGame = 0;
+      var cadernosCarregados = false;
+      
+      var optStatusFin = ["MATRÍCULA ATIVA - MENSALIDADE EM DIA", "MATRÍCULA ATIVA - MENSALIDADE PENDENTE", "MATRÍCULA INVÁLIDA - MENSALIDADE EM DIA", "MATRÍCULA INVÁLIDA - MENSALIDADE PENDENTE", "MATRÍCULA PAUSADA - MENSALIDADE PENDENTE", "MATRÍCULA PAUSADA - MENSALIDADE EM DIA", "-", "DELETAR", ""]; 
+      var optPagFin = ["PAGO", "PENDENTE", "PERDOADO", "VERIFICAR", "INATIVO", "-", ""];
+      var optMesesAno = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO", "-", ""];
+      
+      
+      function abrirModalPrimeiroAcesso() {
+          document.getElementById('primeiraNovaSenha').value = "";
+          document.getElementById('primeiraConfirmaSenha').value = "";
+          document.getElementById('msgErroPrimeiroAcesso').innerText = "";
+          document.getElementById('modalPrimeiroAcesso').style.display = 'flex';
+      }
+      
+      function salvarSenhaPrimeiroAcesso() {
+          var s1 = document.getElementById('primeiraNovaSenha').value.trim();
+          var s2 = document.getElementById('primeiraConfirmaSenha').value.trim();
+          var msg = document.getElementById('msgErroPrimeiroAcesso');
+          var btn = document.getElementById('btnSalvarPrimeiroAcesso');
+          
+          if (!s1 || s1.length < 4) {
+              msg.innerText = "⚠️ A senha deve ter no mínimo 4 caracteres.";
+              return;
+          }
+          if (s1 === "1111") {
+              msg.innerText = "⚠️ Crie uma senha diferente da padrão 1111.";
+              return;
+          }
+          if (s1 !== s2) {
+              msg.innerText = "⚠️ As senhas digitadas não coincidem.";
+              return;
+          }
+          
+          btn.innerText = "⏳ Gravando segurança...";
+          msg.innerText = "";
+          
+          google.script.run.withFailureHandler(function(err) {
+              btn.innerText = "Salvar Senha e Liberar Acesso";
+              msg.innerText = "Erro: " + err.message;
+          }).withSuccessHandler(function(res) {
+              if (res.sucesso) {
+                  btn.innerText = "✅ Senha Alterada com Sucesso!";
+                  btn.style.background = "var(--verde-forte)";
+                  setTimeout(function() {
+                      document.getElementById('modalPrimeiroAcesso').style.display = 'none';
+                      btn.innerText = "Salvar Senha e Liberar Acesso";
+                      alert("🎉 Senha pessoal criada com sucesso! Seja bem-vindo(a)!");
+                  }, 1200);
+              } else {
+                  btn.innerText = "Salvar Senha e Liberar Acesso";
+                  msg.innerText = "Erro: " + res.erro;
+              }
+          }).alterarSenhaPrimeiroAcesso(meuTokenSeguranca, s1);
+      }
+      function abrirModalRecuperacao() {
+          document.getElementById('emailRecuperacao').value = document.getElementById('emailGeral').value;
+          document.getElementById('msgRecuperacao').innerText = "";
+          document.getElementById('modalRecuperacao').style.display = 'flex';
+      }
+      
+      function pedirRecuperacaoSenha() {
+          var email = document.getElementById('emailRecuperacao').value.trim();
+          if(!email) { alert("Por favor, digite o e-mail."); return; }
+          var btn = document.getElementById('btnRecuperarSenha');
+          var msg = document.getElementById('msgRecuperacao');
+          btn.innerText = "⏳ Aguarde..."; msg.innerText = "";
+          google.script.run.withFailureHandler(function(err){
+              btn.innerText = "Enviar Nova Senha"; msg.style.color = "var(--vermelho-oficial)"; msg.innerText = "Erro: " + err.message;
+          }).withSuccessHandler(function(res){
+              btn.innerText = "Enviar Nova Senha";
+              if(res.sucesso) {
+                  msg.style.color = "var(--verde-forte)"; msg.innerText = res.msg;
+                  setTimeout(function(){ document.getElementById('modalRecuperacao').style.display = 'none'; }, 3000);
+              } else { msg.style.color = "var(--vermelho-oficial)"; msg.innerText = res.erro; }
+          }).recuperarSenha(email);
+      }
+      function esc(s) { return String(s || "").replace(/"/g, '&quot;'); }
+      
+      // CORREÇÃO FALHA 7: Filtragem contra DOM-XSS antes da injeção no front-end
+      function transformarLinks(texto) {
+          if (!texto || String(texto).trim() === "" || String(texto).trim() === "-") return texto || "-";
+          
+          var divSegura = document.createElement('div');
+          divSegura.textContent = String(texto);
+          var textoSeguro = divSegura.innerHTML; 
+          
+          var regex = /( (https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+          return textoSeguro.replace(regex, '<a href="$1" target="_blank" style="color: #3498db; text-decoration: underline; font-weight:bold;">Acessar Link ↗</a>');
+      }
+
+      function normalizarTexto(str) { return String(str).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "").toLowerCase(); }
+      function misturarPalavra(p) { var a = p.split(""), n = a.length; for(var i = n - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var tmp = a[i]; a[i] = a[j]; a[j] = tmp; } return a.join(" - "); }
+      function mudarLayout(modo) {
+          var body = document.body; var metaViewport = document.querySelector('meta[name="viewport"]'); document.querySelectorAll('.select-layout').forEach(function(sel) { sel.value = modo; });
+          if (modo === 'pc') { body.classList.remove('force-mobile'); body.classList.add('force-pc'); metaViewport.setAttribute('content', 'width=1200'); } else if (modo === 'celular') { body.classList.remove('force-pc'); body.classList.add('force-mobile'); metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0'); } else { body.classList.remove('force-mobile'); body.classList.remove('force-pc'); metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0'); }
+      }
+      function atualizarPortal() {
+          var btnProf = document.getElementById('btn-atualizar-prof'); var btnAluno = document.getElementById('btn-atualizar-aluno'); cadernosCarregados = false;
+          if (dadosGerais && dadosGerais.tipo === 'professor') {
+              if (btnProf) btnProf.innerText = "⏳ Atualizando..."; document.getElementById('prof-identificacao').innerHTML = "⏳ Atualizando Perfil..."; document.getElementById('prof-turmas').innerHTML = "⏳ Atualizando turmas..."; document.getElementById('dados-alunos').innerHTML = "⏳ Atualizando alunos...";
+              montarPerfilProf(); carregarTodoOSistemaProf(); carregarCadernos('container-niveis-prof'); setTimeout(function() { if (btnProf) btnProf.innerText = "🔄 Atualizar Dados"; }, 2500);
+          } else if (dadosGerais && dadosGerais.tipo === 'aluno') {
+              if (btnAluno) btnAluno.innerText = "⏳ Atualizando..."; var botoes = document.getElementById('lista-perfis-sidebar').querySelectorAll('button'); var activeIdx = 0;
+              botoes.forEach(function(b, i) { if (b.style.color === 'black' || b.style.background.includes('amarelo')) activeIdx = i; });
+              carregarPainelAluno(activeIdx); carregarCadernos('container-niveis-aluno'); setTimeout(function() { if (btnAluno) btnAluno.innerText = "🔄 Atualizar Dados"; }, 2500);
+          }
+      }
+      function fazerLoginUnificado() {
+        var email = document.getElementById('emailGeral').value.trim(); var senha = document.getElementById('senhaGeral').value.trim(); var btn = document.getElementById('btnEntrar');
+        if(!email) { alert("Por favor, digite o e-mail."); return; } if(!senha) { alert("Por favor, digite a senha."); return; }
+        btn.innerText = "Buscando segurança e dados..."; document.getElementById('msgErro').innerText = "";
+        fetch('https://ipapi.co/json/').then(function(resposta) { return resposta.json(); }).then(function(dadosIp) { var local = "Desconhecida"; if (dadosIp && dadosIp.city) { local = dadosIp.city + " - " + dadosIp.region + " (IP: " + dadosIp.ip + ")"; } enviarLoginParaServidor(email, senha, local); }).catch(function() { enviarLoginParaServidor(email, senha, "Falha ao obter IP"); });
+      }
+      function enviarLoginParaServidor(email, senha, local) {
+          var btn = document.getElementById('btnEntrar');
+          google.script.run.withFailureHandler(function(err) { btn.innerText = "Entrar no Sistema"; document.getElementById('msgErro').innerText = "Erro ao fazer login: " + err.message; }).withSuccessHandler(function(respStr) {
+            var resp = JSON.parse(respStr);
+            if(resp.sucesso) {
+               meuTokenSeguranca = resp.token; document.getElementById('tela-login').style.display = 'none'; dadosGerais = resp;
+               if(resp.tipo === 'professor') {
+                  document.getElementById('sidebar-codigo-prof').innerText = "CÓD. PROFESSOR: " + resp.codigoProf; document.getElementById('tela-app-prof').style.display = 'flex'; montarPerfilProf(); carregarTodoOSistemaProf();
+               } else if (resp.tipo === 'aluno') {
+                  document.getElementById('tela-app-aluno').style.display = 'flex'; var divPerfis = document.getElementById('lista-perfis-sidebar');
+                  divPerfis.innerHTML = "<p style='color:var(--amarelo); font-size:13px; margin: 0 0 10px 0;'>Selecionar Aluno:</p>";
+                  resp.perfis.forEach(function(p, index) { divPerfis.innerHTML += '<button class="btn-perfil-aluno" onclick="mudarPerfilAluno(' + index + ', this)" style="display:block; width: 90%; margin: 5px auto; padding: 12px; border-radius: 6px; border: 1px solid var(--amarelo); background: var(--azul-medio); color: white; font-weight: bold; cursor: pointer; transition: 0.2s;">👤 ' + p.nome + '</button>'; });
+                  ['btn-menu-boletim','btn-menu-niveis','btn-menu-fin','btn-menu-cadastro'].forEach(function(id){ document.getElementById(id).style.display = 'none'; }); document.querySelectorAll('#tela-app-aluno .section').forEach(function(s) { s.classList.remove('active'); }); document.getElementById('boas-vindas-aluno').classList.add('active');
+                  if (resp.primeiroAcesso) { abrirModalPrimeiroAcesso(); }
+               }
+            } else { btn.innerText = "Entrar no Sistema"; document.getElementById('msgErro').innerText = resp.erro; }
+          }).verificarLoginUnificado(email, senha, local);
+      }
+      
+      function toggleSidebarAluno() { document.getElementById('sidebarMenuAluno').classList.toggle('open'); document.getElementById('sidebarOverlayAluno').classList.toggle('show'); }
+      function mostrarSecaoAluno(id, btn) { document.getElementById('tela-app-aluno').querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); }); document.getElementById('sidebarMenuAluno').querySelectorAll('.menu-btn').forEach(function(b) { b.classList.remove('active'); }); document.getElementById(id).classList.add('active'); if(btn) btn.classList.add('active'); if(window.innerWidth <= 768) { document.getElementById('sidebarMenuAluno').classList.remove('open'); document.getElementById('sidebarOverlayAluno').classList.remove('show'); } }
+      function toggleSidebarProf() { document.getElementById('sidebarMenuProf').classList.toggle('open'); document.getElementById('sidebarOverlayProf').classList.toggle('show'); }
+      function mostrarSecaoProf(id, btn) { document.getElementById('tela-app-prof').querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); }); document.getElementById('sidebarMenuProf').querySelectorAll('.menu-btn').forEach(function(b) { b.classList.remove('active'); }); document.getElementById(id).classList.add('active'); btn.classList.add('active'); if(window.innerWidth <= 768) { document.getElementById('sidebarMenuProf').classList.remove('open'); document.getElementById('sidebarOverlayProf').classList.remove('show'); } }
+      
+      function carregarCadernos(idContainer) {
+          if (cadernosCarregados) return; var container = document.getElementById(idContainer); container.innerHTML = "<h2 style='text-align:center;'>⏳ Abrindo os cadernos de estudo...</h2>";
+          google.script.run.withFailureHandler(function(err) { container.innerHTML = "<div style='text-align:center; padding:20px;'><h3 style='color:red;'>❌ Erro ao carregar cadernos</h3><p>" + err.message + "</p></div>"; }).withSuccessHandler(function(resStr) {
+                var res = JSON.parse(resStr); if(!res.sucesso) { container.innerHTML = "<div style='text-align:center; padding:20px;'><h3 style='color:red;'>❌ Erro no Servidor</h3><p>" + res.erro + "</p></div>"; return; }
+                var d = res.dados; var imgLivro = res.imagemFundo || "https://lh3.googleusercontent.com/d/1ltFm5HfKkBB19wIKsNkc-xKjiJN32Et8"; var html = ""; var pares = [ { esq: 'A1', dir: 'A2' }, { esq: 'B1', dir: 'B2' }, { esq: 'C1', dir: 'C2' } ];
+                pares.forEach(function(par) {
+                    html += '<div class="notebook-wrapper"><div class="livro-container" style="background-image: url(\'' + imgLivro + '\');">'; html += '<div class="livro-metade esquerda"><span class="livro-titulo">' + par.esq + '</span>';
+                    if(d[par.esq] && d[par.esq].length > 0) { d[par.esq].forEach(function(item) { if(item.link && item.link !== "#") { html += '<a href="' + item.link + '" target="_blank" class="livro-link" style="color:' + item.cor + ';" title="' + esc(item.texto) + '">' + item.texto + '</a>'; } else { html += '<span class="livro-link" style="color:' + item.cor + '; text-decoration:none;" title="' + esc(item.texto) + '">' + item.texto + '</span>'; } }); } else { html += '<span class="livro-link" style="color:#555;">Em breve...</span>'; }
+                    html += '</div><div class="livro-metade direita"><span class="livro-titulo">' + par.dir + '</span>';
+                    if(d[par.dir] && d[par.dir].length > 0) { d[par.dir].forEach(function(item) { if(item.link && item.link !== "#") { html += '<a href="' + item.link + '" target="_blank" class="livro-link" style="color:' + item.cor + ';" title="' + esc(item.texto) + '">' + item.texto + '</a>'; } else { html += '<span class="livro-link" style="color:' + item.cor + '; text-decoration:none;" title="' + esc(item.texto) + '">' + item.texto + '</span>'; } }); } else { html += '<span class="livro-link" style="color:#555;">Em breve...</span>'; }
+                    html += '</div></div></div>';
+                });
+                container.innerHTML = html; cadernosCarregados = true;
+            }).obterDadosDosNiveis(meuTokenSeguranca);
+      }
+      
+      function mudarPerfilAluno(index, btnClicado) {
+         var botoes = document.getElementById('lista-perfis-sidebar').querySelectorAll('button'); botoes.forEach(function(b) { b.style.background = 'var(--azul-medio)'; b.style.color = 'white'; });
+         btnClicado.style.background = 'var(--amarelo)'; btnClicado.style.color = 'black';
+         ['btn-menu-boletim','btn-menu-niveis','btn-menu-fin','btn-menu-cadastro'].forEach(function(id){ document.getElementById(id).style.display = 'block'; });
+         mostrarSecaoAluno('boletim-aluno', document.getElementById('btn-menu-boletim')); carregarPainelAluno(index);
+      }
+      
+      function atualizarMinhaCor(turma, idAluno, matricula, inputCor, index) {
+         var spanAviso = inputCor.nextElementSibling; spanAviso.innerText = "⏳ Salvando cor..."; spanAviso.style.color = "#d35400";
+         google.script.run.withFailureHandler(function(err) { spanAviso.innerText = "❌ Erro ao salvar: " + err.message; spanAviso.style.color = "red"; }).withSuccessHandler(function(sucesso) {
+             if(sucesso) { spanAviso.innerText = "✅ Cor salva! Atualizando visual..."; spanAviso.style.color = "var(--verde-forte)"; setTimeout(function() { carregarPainelAluno(index); }, 1500); } else { spanAviso.innerText = "❌ Erro ao salvar."; spanAviso.style.color = "red"; setTimeout(function() { spanAviso.innerText = "Essa cor será usada nos gráficos."; spanAviso.style.color = "#777"; }, 3000); }
+         }).salvarCorAluno(meuTokenSeguranca, turma, idAluno, matricula, inputCor.value);
+      }
+      function salvarEdicaoAluno(index) {
+          var perfilAtual = dadosGerais.perfis[index]; var btn = document.getElementById('btnSalvarCadAluno'); var senhaAtual = document.getElementById('cad-senhaAtual').value; var novaSenha = document.getElementById('cad-novaSenha').value;
+          if (novaSenha.trim() !== "" && senhaAtual.trim() === "") { alert("⚠️ Para alterar sua senha, você precisa informar a sua Senha Atual no campo indicado!"); return; }
+          btn.innerText = "⏳ Salvando..."; var dadosForm = { linha: document.getElementById('cad-linha').value, nomeResp: document.getElementById('cad-nomeResp').value, nomeAluno: document.getElementById('cad-nomeAluno').value, aniversario: document.getElementById('cad-aniversario').value, cpf: document.getElementById('cad-cpf').value, email: document.getElementById('cad-email').value, telefone: document.getElementById('cad-telefone').value, cep: document.getElementById('cad-cep').value, endereco: document.getElementById('cad-endereco').value, paisEstado: document.getElementById('cad-paisEstado').value, instagram: document.getElementById('cad-instagram').value, tiktok: document.getElementById('cad-tiktok').value };
+          google.script.run.withFailureHandler(function(err) { alert("Erro de conexão: " + err.message); btn.innerText = "💾 Salvar Alterações"; }).withSuccessHandler(function(res) {
+              if (res.sucesso) { btn.innerText = "✅ Alterações Salvas!"; document.getElementById('cad-senhaAtual').value = ""; document.getElementById('cad-novaSenha').value = ""; setTimeout(function() { btn.innerText = "💾 Salvar Alterações"; }, 3000); } else { alert("❌ Erro: " + res.erro); btn.innerText = "💾 Salvar Alterações"; }
+          }).salvarEdicaoCadastroAluno(meuTokenSeguranca, perfilAtual.idAluno, senhaAtual, novaSenha, dadosForm);
+      }
+      function processarMissoes(palavrasArray) {
+          var missoes = [];
+          palavrasArray.forEach(function(p) {
+              var w = String(p).trim(); if (w === "") return; if (w.includes('(Frase:')) return;
+              if (w.startsWith('[')) {
+                  var tagEnd = w.indexOf(']');
+                  if (tagEnd > -1) {
+                      var tag = w.substring(0, tagEnd + 1).toUpperCase(); var resto = w.substring(tagEnd + 1).trim(); var partes = resto.split('|'); var word = partes[0].trim(); var ans = partes.length > 1 ? partes[1].trim() : "";
+                      if (tag === '[TRAD]') missoes.push({ tipo: 'TRADUÇÃO (EN ➔ PT)', q: word + " = ?", a: ans, orig: w }); else if (tag === '[TRAD_EN]') missoes.push({ tipo: 'TRADUÇÃO (PT ➔ EN)', q: word + " = ?", a: ans, orig: w }); else if (tag === '[ANT]') missoes.push({ tipo: 'QUAL O ANTÔNIMO?', q: "Qual o oposto de: " + word, a: ans, orig: w }); else if (tag === '[SIN]') missoes.push({ tipo: 'QUAL O SINÔNIMO?', q: "Qual palavra tem o mesmo sentido de: " + word, a: ans, orig: w });
+                      else if (tag === '[COMP]') { var hideStr = ""; for(var i=0; i<word.length; i++) { hideStr += (i % 2 !== 0 && word[i] !== ' ') ? "_" : word[i]; } missoes.push({ tipo: 'COMPLETE A PALAVRA', q: hideStr, a: word, orig: w }); } else if (tag === '[FRASE]') missoes.push({ tipo: 'CRIE UMA FRASE', q: "Faça uma frase em inglês usando: " + word, a: 'FRASE_LIVRE', orig: w, palBase: word }); else if (tag === '[DES]') missoes.push({ tipo: 'DESEMBARALHE', q: misturarPalavra(word).toUpperCase(), a: word, orig: w }); else if (tag === '[AUDIO]') missoes.push({ tipo: 'LISTENING', q: word, a: word, orig: w, isAudio: true }); else if (tag === '[SPEAK]') missoes.push({ tipo: 'SPEAKING', q: word, a: word, orig: w, isSpeak: true }); return; 
+                  }
+              }
+              if (w.includes('=')) { var pts = w.split('='); missoes.push({ tipo: 'TRADUÇÃO', q: pts[0].trim() + " = ?", a: pts[1].trim(), orig: w }); } else if (w.includes('/')) { var pts = w.split('/'); missoes.push({ tipo: 'QUAL O ANTÔNIMO?', q: "Qual o oposto de: " + pts[0].trim(), a: pts[1].trim(), orig: w }); } else if (w.includes(':')) { var pts = w.split(':'); missoes.push({ tipo: 'QUAL O SINÔNIMO?', q: "Qual palavra tem o mesmo sentido de: " + pts[0].trim(), a: pts[1].trim(), orig: w }); } 
+              else if (w.includes('-')) { var pts = w.split('-'); var wordBase = pts[0].trim(); var hideStr = ""; for(var i=0; i<wordBase.length; i++) { hideStr += (i % 2 !== 0 && wordBase[i] !== ' ') ? "_" : wordBase[i]; } missoes.push({ tipo: 'COMPLETE A PALAVRA', q: hideStr, a: wordBase, orig: w }); } else if (w.includes('+')) { var pts = w.split('+'); missoes.push({ tipo: 'CRIE UMA FRASE', q: "Faça uma frase em inglês usando: " + pts[0].trim(), a: 'FRASE_LIVRE', orig: w, palBase: pts[0].trim() }); } else { missoes.push({ tipo: 'DESEMBARALHE', q: misturarPalavra(w).toUpperCase(), a: w, orig: w }); }
+          }); return missoes.reverse();
+      }
+      function tocarAudioGame(texto) { if ('speechSynthesis' in window) { var msg = new SpeechSynthesisUtterance(texto); msg.lang = 'en-US'; msg.rate = 0.85; window.speechSynthesis.speak(msg); } else { alert("Navegador não suporta áudio."); } }
+      function gravarPronunciaGame() {
+          var btn = document.getElementById('btnGravarVoz'); var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) { alert("Navegador não suporta gravação de voz."); return; }
+          var recognition = new SpeechRecognition(); recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+          recognition.onstart = function() { btn.innerText = "🔴 Ouvindo... Fale a palavra!"; btn.style.backgroundColor = "var(--vermelho-oficial)"; };
+          recognition.onresult = function(event) { document.getElementById('gameInput').value = event.results[0][0].transcript; btn.innerText = "🎙 Falar Novamente"; btn.style.backgroundColor = "var(--accent)"; checarRespostaGame(); };
+          recognition.onerror = function(event) { btn.innerText = "🎙 Erro. Tentar de novo"; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black"; };
+          recognition.onend = function() { if (btn.innerText.includes("Ouvindo")) { btn.innerText = "🎙 Tentar de novo"; btn.style.backgroundColor = "var(--accent)"; } }; recognition.start();
+      }
+      function iniciarGame(index) {
+          idxPerfilGame = index; if (jogosPendentes.length === 0) return alert("Missões completadas!"); jogoAtual = 0; pontosGanhos = 0; frasesCriadas = []; palavrasAcertadas = [];
+          document.getElementById('modalGame').style.display = 'flex'; document.getElementById('gameBtn').style.display = 'block'; document.getElementById('gameInput').style.display = 'block'; renderizarMissao();
+      }
+      
+      function renderizarMissao() {
+          var g = jogosPendentes[jogoAtual]; document.getElementById('gameBtn').innerText = 'Verificar'; document.getElementById('gameHeader').innerText = "Missão " + (jogoAtual + 1) + " de " + jogosPendentes.length; document.getElementById('gameTypeLabel').innerText = g.tipo; document.getElementById('gameTypeLabel').style.color = temaGameCor; document.getElementById('gameBtn').style.background = temaGameCor; document.getElementById('containerSpeak').style.display = "none"; document.getElementById('gameInput').style.display = "block"; document.getElementById('gameBtnPular').style.display = "block";
+          if (g.isSpeak) { document.getElementById('gameBtn').style.display = "none"; } else { document.getElementById('gameBtn').style.display = "block"; }
+          document.getElementById('gameBtnGroup').style.display = "flex";
+          if (g.isAudio) { document.getElementById('gameQuestion').innerHTML = '<button class="btn-audio-play" onclick=\"tocarAudioGame(\'' + g.q + '\')\" style="background-color:' + temaGameCor + ';">🔊</button><br><span style="font-size:14px; color:#777; margin-top:10px; display:block;">Clique para ouvir a palavra em inglês</span>'; setTimeout(function(){ tocarAudioGame(g.q); }, 500); document.getElementById('gameInput').readOnly = false; } else if (g.isSpeak) { document.getElementById('gameQuestion').innerHTML = g.q; document.getElementById('containerSpeak').style.display = "block"; document.getElementById('gameInput').readOnly = true; document.getElementById('gameInput').placeholder = "Sua voz aparecerá aqui..."; document.getElementById('btnGravarVoz').innerText = "🎙️ Segurar para Falar"; document.getElementById('btnGravarVoz').style.backgroundColor = "var(--vermelho-oficial)"; document.getElementById('btnGravarVoz').style.color = "white"; } else { document.getElementById('gameQuestion').innerText = g.q; document.getElementById('gameInput').readOnly = false; document.getElementById('gameInput').placeholder = "Sua resposta aqui..."; }
+          document.getElementById('gameInput').value = ""; document.getElementById('gameFeedback').innerText = ""; if(!g.isSpeak) { setTimeout(function() { document.getElementById('gameInput').focus(); }, 100); }
+      }
+      
+      function pularMissaoGame() { var g = jogosPendentes[jogoAtual]; var feed = document.getElementById('gameFeedback'); feed.innerText = "⏭️ Pulou! A resposta correta era: " + (g.a !== 'FRASE_LIVRE' ? String(g.a).trim() : 'Qualquer frase em inglês.'); feed.style.color = "#7f8c8d"; document.getElementById('gameBtnPular').style.display = "none"; document.getElementById('gameBtn').style.display = "block"; document.getElementById('gameBtn').innerText = "Próxima Missão"; }
+      function checarRespostaGame() {
+          var btn = document.getElementById('gameBtn'); if (btn.innerText === "Salvar e Atualizar") { finalizarSalvarGame(); return; } if (btn.innerText === "Próxima Missão") { jogoAtual++; renderizarProxima(); return; }
+          var g = jogosPendentes[jogoAtual]; var rawAns = document.getElementById('gameInput').value; var feed = document.getElementById('gameFeedback');
+          if(rawAns.trim() === "") { feed.innerText = "⚠ Digite uma resposta!"; feed.style.color = "orange"; return; }
+          if (g.a === "" && g.tipo !== 'CRIE UMA FRASE' && !g.isAudio && !g.isSpeak && g.tipo !== 'DESEMBARALHE' && g.tipo !== 'COMPLETE A PALAVRA') { feed.innerText = "⚠️ O gabarito está vazio. Pule esta missão e avise o professor!"; feed.style.color = "orange"; return; }
+          if (g.a === 'FRASE_LIVRE') { frasesCriadas.push({ original: g.orig, novo: g.palBase + " + (Frase: " + rawAns.trim() + ")" }); pontosGanhos++; feed.innerText = "✅ Frase aceita! +1 Ponto!"; feed.style.color = "var(--verde-forte)"; } else {
+              var userAns = normalizarTexto(rawAns); var corretas = String(g.a).split(','); var acertou = corretas.some(function(resp) { return userAns === normalizarTexto(resp); });
+              if (acertou) { pontosGanhos++; feed.innerText = "✅ Correto! +1 Ponto!"; feed.style.color = "var(--verde-forte)"; palavrasAcertadas.push(g.orig); } else { feed.innerText = "❌ Incorreto. O correto era: " + String(g.a).trim(); feed.style.color = "var(--vermelho-oficial)"; }
+          } document.getElementById('gameBtnPular').style.display = "none"; document.getElementById('gameBtn').style.display = "block"; document.getElementById('gameBtn').innerText = "Próxima Missão";
+      }
+      
+      function renderizarProxima() {
+          if (jogoAtual >= jogosPendentes.length) { document.getElementById('gameHeader').innerText = "🏁 Fim de Jogo!"; document.getElementById('gameTypeLabel').innerText = "CONCLUÍDO"; document.getElementById('gameQuestion').innerText = "Você ganhou " + pontosGanhos + " pontos!"; document.getElementById('gameInput').style.display = "none"; document.getElementById('containerSpeak').style.display = "none"; document.getElementById('gameBtnGroup').style.display = "block"; document.getElementById('gameBtnPular').style.display = "none"; document.getElementById('gameFeedback').innerText = "Clique abaixo para salvar sua pontuação no boletim."; document.getElementById('gameFeedback').style.color = "#777"; document.getElementById('gameBtn').style.display = "block"; document.getElementById('gameBtn').innerText = "Salvar e Atualizar"; } else { renderizarMissao(); }
+      }
+      
+      function fecharGame() { document.getElementById('modalGame').style.display = 'none'; }
+      function finalizarSalvarGame() {
+          var btn = document.getElementById('gameBtn'); btn.innerText = "⏳ Salvando dados..."; var pf = dadosGerais.perfis[idxPerfilGame];
+          google.script.run.withFailureHandler(function(err) { alert("Erro de conexão ao salvar: " + err.message); fecharGame(); }).withSuccessHandler(function(ok) {
+              if (ok) { btn.innerText = "✅ Tudo Salvo!"; setTimeout(function() { fecharGame(); carregarPainelAluno(idxPerfilGame); }, 1500); } else { alert("Houve um erro ao salvar o progresso."); fecharGame(); }
+          }).salvarProgressoJogoAluno(meuTokenSeguranca, pf.turma, pf.idAluno, dadosGerais.matricula, pontosGanhos, frasesCriadas, palavrasAcertadas);
+      }
+      function carregarPainelAluno(index) {
+         var perfilAtual = dadosGerais.perfis[index];
+         document.getElementById('cabecalho-boletim').innerHTML = "⏳ Carregando..."; document.getElementById('detalhes-boletim').innerHTML = ""; document.getElementById('tabela-cronograma-aluno').innerHTML = "⏳ Carregando..."; document.getElementById('detalhes-financeiro-aluno').innerHTML = "⏳ Carregando..."; document.getElementById('form-cadastro-aluno').innerHTML = "⏳ Carregando dados...";
+         
+         google.script.run.withFailureHandler(function(err) { document.getElementById('cabecalho-boletim').innerHTML = "<div style='color:red;'>Erro de Rede: " + err.message + "</div>"; }).withSuccessHandler(function(dStr) {
+            try {
+                var d = JSON.parse(dStr); var niv = (d.turmaInfo && d.turmaInfo.nivel) ? d.turmaInfo.nivel : "-"; var porc = (d.turmaInfo && d.turmaInfo.porcentagem) ? d.turmaInfo.porcentagem : "-"; var desTurma = (d.turmaInfo && d.turmaInfo.desempenhoTurma) ? d.turmaInfo.desempenhoTurma : "-"; var lnk = (d.turmaInfo && d.turmaInfo.linkAulas) ? transformarLinks(d.turmaInfo.linkAulas) : "-"; var grav = (d.turmaInfo && d.turmaInfo.aulasGravadas) ? transformarLinks(d.turmaInfo.aulasGravadas) : "-"; var corAluno = (d.acad && d.acad.cor && String(d.acad.cor).startsWith('#')) ? d.acad.cor : '#3498db'; var fundoTema = (d.acad && d.acad.cor && String(d.acad.cor).startsWith('#')) ? d.acad.cor + '20' : '#e8f4f8'; var bordaTema = (d.acad && d.acad.cor && String(d.acad.cor).startsWith('#')) ? d.acad.cor : '#3498db'; temaGameCor = bordaTema; 
+                
+                document.getElementById('cabecalho-boletim').innerHTML = '<div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>📚 Sua Turma:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + (perfilAtual.turma || "Não definida") + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>⏰ Horário:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + (perfilAtual.horario || "Não definido") + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>🆔 Matrícula:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + dadosGerais.matricula + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>📈 Nível:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + niv + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>📊 Porcentagem:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + porc + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + ';"><strong>⭐ Desempenho da Turma:</strong><br><span style="font-size:16px; color:var(--primary); font-weight:bold;">' + desTurma + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:' + bordaTema + '; min-width: 100%;"><strong>🔗 Link das Aulas:</strong><br><span style="font-size:14px;">' + lnk + '</span></div><div class="metrica-box" style="background-color:' + fundoTema + '; border-color:var(--vermelho-oficial); min-width: 100%;"><strong>🎥 Aulas Gravadas:</strong><br><span style="font-size:14px;">' + grav + '</span></div>';
+                
+                if(d.acad) {
+                    var msgFormatada = transformarLinks(d.acad.mensagem || "Sem avisos no momento.");
+                    var htmlAcad = '<h3 style="margin-top:20px; border-bottom: 2px solid ' + bordaTema + '; padding-bottom:10px; color:' + bordaTema + ';">📊 Progresso de ' + perfilAtual.nome + '</h3><div style="background-color:' + fundoTema + '; border:1px solid ' + bordaTema + '; padding:20px; border-radius:8px;"><div style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:20px;"><div style="flex:1; min-width:150px; text-align:center; padding:15px; background:white; border-radius:8px; border:1px solid ' + bordaTema + '50;"><span style="font-size:12px; color:#777; font-weight:bold;">Frequência</span><br><span style="font-size:24px; font-weight:bold; color:var(--verde-forte);">' + (d.acad.frequencia || "-") + '</span></div><div style="flex:1; min-width:150px; text-align:center; padding:15px; background:white; border-radius:8px; border:1px solid ' + bordaTema + '50;"><span style="font-size:12px; color:#777; font-weight:bold;">Nota Geral</span><br><span style="font-size:24px; font-weight:bold; color:' + bordaTema + ';">' + (d.acad.nota || "-") + '</span></div></div>';
+                    var corrida = d.acad.corridaTurma || []; corrida.sort(function(a, b) { return (parseFloat(b.nota)||0) - (parseFloat(a.nota)||0); }); var notasValidas = corrida.map(function(a){ return parseFloat(a.nota)||0; }); var maxNota = notasValidas.length > 0 ? Math.max.apply(null, notasValidas) : 10; var minNota = notasValidas.length > 0 ? Math.min.apply(null, notasValidas) : 0; if(maxNota < 10) maxNota = 10; if(minNota > 0) minNota = 0; var range = maxNota - minNota; if(range === 0) range = 1;
+                    
+                    htmlAcad += '<div style="margin-top:20px; padding:15px; background:white; border:1px solid ' + bordaTema + '50; border-radius:8px;"><h3 style="margin-top:0; color:' + bordaTema + ';">🏆 Corrida da Turma</h3>';
+                    corrida.forEach(function(al) {
+                        var nV = parseFloat(al.nota) || 0; var widthPorc = ((nV - minNota) / range) * 100; var corSolid = al.isMe ? bordaTema : ((al.cor && String(al.cor).startsWith('#')) ? al.cor : '#ccc');
+                        htmlAcad += '<div style="margin-bottom:12px;">';
+                        if (al.isMe) { htmlAcad += '<div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:3px; color:' + bordaTema + ';"><span>🎯 Você</span><span>' + nV + ' pts</span></div><div style="width:100%; background:#eee; border-radius:10px; height:18px; overflow:hidden; border:2px solid ' + bordaTema + ';"><div style="width:' + widthPorc + '%; background:' + corSolid + '; height:100%; border-radius:10px; transition:0.8s;"></div></div>'; } else { htmlAcad += '<div style="display:flex; justify-content:space-between; font-size:11px; font-weight:normal; margin-bottom:3px; color:#999;"><span>👤 Colega</span><span>??? pts</span></div><div style="width:100%; background:#f5f5f5; border-radius:10px; height:12px; overflow:hidden; border:1px solid #eee;"><div style="width:' + widthPorc + '%; background:' + corSolid + '; height:100%; border-radius:10px; opacity:0.6; transition:0.8s;"></div></div>'; }
+                        htmlAcad += '</div>';
+                    });
+                    htmlAcad += '</div><div style="margin-top:15px; padding:15px; background:white; border:1px solid ' + bordaTema + '50; border-radius:8px; display:flex; align-items:center; gap:15px; flex-wrap:wrap;"><strong style="color:' + bordaTema + ';">🎨 Escolha a cor do seu perfil:</strong><input type="color" value="' + corAluno + '" onchange="atualizarMinhaCor(\'' + perfilAtual.turma + '\', \'' + perfilAtual.idAluno + '\', \'' + dadosGerais.matricula + '\', this, ' + index + ')" style="cursor:pointer; width:50px; height:30px; padding:0; border:none; border-radius:4px;"><span style="font-size:12px; color:#777; font-weight:bold; transition:0.3s;">Essa cor será usada nos gráficos.</span></div><div style="margin-top:15px; padding:15px; background:#fff3cd; color:#856404; border-left:4px solid #ffeeba; border-radius:4px; word-wrap: break-word;"><strong>💬 Mensagem:</strong><br><br>' + msgFormatada + '</div>';
+                    jogosPendentes = processarMissoes(d.acad.palavras || []);
+                    if (jogosPendentes.length > 0) { htmlAcad += '<div style="text-align:center; margin-top: 20px;"><button class="btn-jogar" onclick="iniciarGame(' + index + ')">🎮 Jogar Missões (' + jogosPendentes.length + ')</button></div>'; } else { htmlAcad += '<div style="text-align:center; margin-top:20px; font-size:12px; color:#777;"><i>Nenhuma missão pendente no momento.</i></div>'; }
+                    htmlAcad += '</div>'; document.getElementById('detalhes-boletim').innerHTML = htmlAcad;
+                } else { document.getElementById('detalhes-boletim').innerHTML = "<p style='color:red;'>Ficha acadêmica não encontrada.</p>"; }
+                
+                if(d.crono) {
+                    var hA = "<table><tr><th>Duração</th><th>Data</th><th>Aula</th><th>Status</th></tr>";
+                    d.crono.forEach(function(l) {
+                       var v = String(l[3] || "").trim().toUpperCase(); var tag = '<span class="tag-status tag-neutra">' + v + '</span>';
+                       if(v === 'FEITA') tag = '<span class="tag-status tag-verde">FEITA</span>'; else if(v === 'ESPERA') tag = '<span class="tag-status tag-amarelo">ESPERA</span>'; else if(v === '-') tag = '<span class="tag-status tag-vermelho">-</span>';
+                       hA += '<tr><td>' + l[0] + '</td><td>' + l[1] + '</td><td style="text-align:left;">' + l[2] + '</td><td>' + tag + '</td></tr>';
+                    }); hA += "</table>"; document.getElementById('tabela-cronograma-aluno').innerHTML = hA;
+                } else { document.getElementById('tabela-cronograma-aluno').innerHTML = "<p>Cronograma não encontrado.</p>"; }
+                
+                if(d.fin) {
+                    var formatarPgto = function(val) { var v = String(val).trim().toUpperCase(); if(v === "PAGO") return '<span class="tag-status" style="background:#6aa84f; color:black;">PAGO</span>'; if(v === "PENDENTE") return '<span class="tag-status" style="background:#e06666; color:black;">PENDENTE</span>'; if(v === "PERDOADO") return '<span class="tag-status" style="background:#f6b26b; color:black;">PERDOADO</span>'; if(v === "VERIFICAR") return '<span class="tag-status" style="background:#cc0000; color:white;">VERIFICAR</span>'; if(v === "INATIVO") return '<span class="tag-status" style="background:#f3f3f3; color:#555;">INATIVO</span>'; return '<span class="tag-status tag-neutra">' + (val || "-") + '</span>'; };
+                    var htmlFin = '<div style="background:#f9fbfc; border:1px solid #ddd; padding:20px; border-radius:8px; margin-bottom:20px;"><p><strong>Status Atual:</strong> ' + d.fin.statusAtual + '</p><p><strong>Vencimento Padrão:</strong> ' + d.fin.vencimento + '</p><p><strong>Valor Mensal:</strong> R$ ' + d.fin.valor + '</p></div><div style="background: var(--azul-forte); border: 2px solid var(--amarelo); border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);"><h3 style="color: var(--amarelo); margin-top: 0; font-size: 20px;">💳 Chave PIX para Pagamento</h3><p style="font-size: 22px; color: white; font-weight: bold; word-break: break-all; margin: 10px 0; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 6px;">' + (d.fin.pix || "Não cadastrado") + '</p><p style="font-size: 13px; color: #c7ccea; margin: 0;">Utilize a chave acima para realizar o pagamento da sua mensalidade.</p></div><div class="tabela-container"><table><tr><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th></tr><tr>' + d.fin.meses.map(function(m) { return '<td>' + formatarPgto(m) + '</td>'; }).join("") + '</tr></table></div>';
+                    document.getElementById('detalhes-financeiro-aluno').innerHTML = htmlFin;
+                } else { document.getElementById('detalhes-financeiro-aluno').innerHTML = "<p>Dados não encontrados.</p>"; }
+                
+            } catch(erroInterno) { document.getElementById('cabecalho-boletim').innerHTML = "<div style='color:red;'>Erro Interno: " + erroInterno.message + "</div>"; }
+         }).getDadosPainelAluno(meuTokenSeguranca, perfilAtual.turma, dadosGerais.matricula, perfilAtual.idAluno);
+         
+         google.script.run.withFailureHandler(function(err) { document.getElementById('form-cadastro-aluno').innerHTML = "<p style='color:red;'>Erro: " + err.message + "</p>"; }).withSuccessHandler(function(dCadStr) {
+            try {
+                var dCad = JSON.parse(dCadStr); 
+                if(dCad && dCad.cadastro) {
+                    var c = dCad.cadastro;
+                    var htmlForm = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; background: #f9fbfc; padding: 20px; border: 1px solid #ddd; border-radius: 8px;"><input type="hidden" id="cad-linha" value="' + c.linha + '"><div style="grid-column: 1 / -1;"><h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">👤 Dados Pessoais</h3></div><div><label style="font-size:12px; font-weight:bold;">Nome do Responsável (Cliente):</label><input type="text" id="cad-nomeResp" value="' + esc(c.nomeResp) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">Nome do(s) Aluno(s):</label><input type="text" id="cad-nomeAluno" value="' + esc(c.nomeAluno) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">Aniversário:</label><input type="text" id="cad-aniversario" value="' + esc(c.aniversario) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">CPF:</label><input type="text" id="cad-cpf" value="' + esc(c.cpf) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div style="grid-column: 1 / -1; margin-top: 15px;"><h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">📞 Contato e Endereço</h3></div><div><label style="font-size:12px; font-weight:bold;">E-mail:</label><input type="text" id="cad-email" value="' + esc(c.email) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">Telefone:</label><input type="text" id="cad-telefone" value="' + esc(c.telefone) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">CEP:</label><input type="text" id="cad-cep" value="' + esc(c.cep) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div style="grid-column: 1 / -1;"><label style="font-size:12px; font-weight:bold;">Endereço Completo:</label><input type="text" id="cad-endereco" value="' + esc(c.endereco) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">País / Estado:</label><input type="text" id="cad-paisEstado" value="' + esc(c.paisEstado) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">Instagram/Telegram:</label><input type="text" id="cad-instagram" value="' + esc(c.instagram) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">TikTok:</label><input type="text" id="cad-tiktok" value="' + esc(c.tiktok) + '" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div style="grid-column: 1 / -1; margin-top: 15px;"><h3 style="margin-top:0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">🔒 Alterar Senha (Opcional)</h3></div><div><label style="font-size:12px; font-weight:bold;">Senha Atual:</label><input type="password" id="cad-senhaAtual" placeholder="Necessária apenas se for alterar a senha" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div><div><label style="font-size:12px; font-weight:bold;">Nova Senha:</label><input type="password" id="cad-novaSenha" placeholder="Deixe em branco para manter a atual" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;"></div></div><div style="margin-top: 20px; text-align: right;"><button class="btn-salvar" id="btnSalvarCadAluno" onclick="salvarEdicaoAluno(' + index + ')" style="padding: 12px 25px; font-size: 15px;">💾 Salvar Alterações</button></div>'; document.getElementById('form-cadastro-aluno').innerHTML = htmlForm;
+                } else { document.getElementById('form-cadastro-aluno').innerHTML = "<div style='background:#fdecea; border:1px solid var(--vermelho-oficial); padding:20px; border-radius:8px;'><h3 style='color:var(--vermelho-oficial); margin-top:0;'>❌ Ops, algo deu errado!</h3><p style='color:#333; margin:0;'><strong>O sistema relatou:</strong> " + ((dCad && dCad.erro) ? dCad.erro : "Erro desconhecido") + "</p></div>"; }
+            } catch(e2) { document.getElementById('form-cadastro-aluno').innerHTML = "<div style='color:red;'>Erro Interno: " + e2.message + "</div>"; }
+         }).getDadosCadastroAluno(meuTokenSeguranca, dadosGerais.matricula);
+      }
+      function abrirModalPerfil() { 
+          document.getElementById('editEmail').value = dadosGerais.emailProf === "Não cadastrado" ? "" : dadosGerais.emailProf; document.getElementById('editPix').value = dadosGerais.pixProf === "Aguardando..." ? "" : dadosGerais.pixProf; document.getElementById('editFoto').value = dadosGerais.fotoProf; document.getElementById('editNascimento').value = dadosGerais.nascimentoProf === "Não informado" ? "" : dadosGerais.nascimentoProf; 
+          document.getElementById('editSenhaAtualProf').value = ""; document.getElementById('editNovaSenhaProf').value = ""; 
+          document.getElementById('modalEdicaoPerfil').style.display = 'flex'; 
+      }
+      
+      function fecharModalPerfil() { document.getElementById('modalEdicaoPerfil').style.display = 'none'; }
+      
+      function salvarEdicaoPerfil() { 
+          var btn = document.getElementById('btnSalvarPerfilEdit'); btn.innerText = "⏳ Salvando..."; 
+          var nvEmail = document.getElementById('editEmail').value.trim(); var nvPix = document.getElementById('editPix').value.trim(); var nvFoto = document.getElementById('editFoto').value.trim(); var nvNasc = document.getElementById('editNascimento').value.trim(); 
+          var senhaAtual = document.getElementById('editSenhaAtualProf').value.trim(); var novaSenha = document.getElementById('editNovaSenhaProf').value.trim();
+          
+          if(novaSenha !== "" && senhaAtual === "") { alert("Digite a Senha Atual para poder alterar sua senha!"); btn.innerText = "💾 Salvar Alterações"; return; }
+          
+          google.script.run.withFailureHandler(function(err) { alert("Erro ao editar perfil: " + err.message); btn.innerText = "💾 Salvar Alterações"; }).withSuccessHandler(function(res) { 
+              if(res.sucesso) { btn.innerText = "✅ Salvo!"; dadosGerais.emailProf = nvEmail || "Não cadastrado"; dadosGerais.pixProf = nvPix || "Aguardando..."; dadosGerais.fotoProf = nvFoto; dadosGerais.nascimentoProf = nvNasc || "Não informado"; setTimeout(function(){ fecharModalPerfil(); montarPerfilProf(); btn.innerText = "💾 Salvar Alterações"; }, 1500); } else { alert(res.erro); btn.innerText = "💾 Salvar Alterações"; } 
+          }).salvarPerfilProfessor(meuTokenSeguranca, dadosGerais.linhaProfessor, nvEmail, nvPix, nvFoto, nvNasc, senhaAtual, novaSenha); 
+      }
+      
+      function montarPerfilProf() { 
+          var urlFoto = dadosGerais.fotoProf; var nomeLetra = String(dadosGerais.nomeProf).charAt(0).toUpperCase(); 
+          var imgTag = '<div style="width:110px; height:110px; border-radius:50%; background:var(--azul-forte); color:white; display:flex; align-items:center; justify-content:center; font-size:40px; font-weight:bold; border:4px solid var(--accent); margin:0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">' + nomeLetra + '</div>'; 
+          if (urlFoto && urlFoto !== "" && urlFoto !== "-") { 
+              var idMatch = urlFoto.match(/(?:id=|\/d\/)([\w-]+)/); 
+              if (urlFoto.includes("drive.google.com") && idMatch && idMatch[1]) { imgTag = '<img src="https://lh3.googleusercontent.com/d/' + idMatch[1] + '" onerror=\"this.onerror=null; this.src=\'https://drive.google.com/thumbnail?id=\' + idMatch[1] + \'&sz=w400\';\" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:4px solid var(--accent); box-shadow: 0 4px 8px rgba(0,0,0,0.1); display:block; margin:0 auto;">'; 
+              } else { var linkPuro = urlFoto.match(/https?:\/\/[^\s]+/); var srcImagem = linkPuro ? linkPuro[0] : urlFoto; imgTag = '<img src="' + srcImagem + '" style="width:110px; height:110px; border-radius:50%; object-fit:cover; border:4px solid var(--accent); box-shadow: 0 4px 8px rgba(0,0,0,0.1); display:block; margin:0 auto;">'; } 
+          } 
+          document.getElementById('prof-identificacao').innerHTML = '<div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap; background:#f9fbfc; padding:20px; border:1px solid #e1e8ed; border-radius:8px; margin-bottom:20px;"><div style="flex-shrink:0; text-align:center; min-width: 120px;">' + imgTag + '</div><div style="flex:1; min-width:200px;"><h2 style="margin:0; color:var(--primary); font-size: 22px;">' + dadosGerais.nomeProf + '</h2><p style="margin:8px 0; font-size:14px; color:#555;"><strong>Código:</strong> <span style="color:var(--accent); font-weight:bold;">' + dadosGerais.codigoProf + '</span></p><p style="margin:8px 0; font-size:14px; color:#555; word-break: break-all;"><strong>E-mail:</strong> ' + dadosGerais.emailProf + '</p><p style="margin:8px 0; font-size:14px; color:#555;"><strong>Aniversário:</strong> ' + dadosGerais.nascimentoProf + '</p></div><div style="flex:1; min-width:200px; background:white; padding:15px; border-radius:8px; border-left:5px solid var(--verde-forte); box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><h4 style="margin-top:0; color:var(--primary); border-bottom:1px solid #eee; padding-bottom:8px;">💰 Financeiro</h4><p style="margin:10px 0; font-size:13px;"><strong>Acesso:</strong> <span style="color:var(--accent); font-weight:bold;">🔒 Acesso Restrito ao Sistema</span></p><p style="margin:10px 0; font-size:13px; display:flex; flex-direction:column;"><strong>PIX (Mestre):</strong> <span style="word-break:break-word; color:#555; margin-top:2px;">' + dadosGerais.pixProf + '</span></p></div></div>'; 
+      }
+      
+      function carregarTodoOSistemaProf() { 
+          const OPCOES_TURMA = ["", "TURMA 1", "TURMA 2", "TURMA 3", "TURMA 4", "TURMA 5", "TURMA 6", "TURMA 7", "TURMA 8"]; const OPCOES_STATUS_T = ["", "TURMA ATIVA", "TURMA INATIVA", "CONCLUÍDA", "CANCELADA"]; const OPCOES_NIVEL = ["", "A1 - BÁSICO 1", "A2 - BÁSICO 2", "B1 - INTERMEDIÁRIO 1", "B2 - INTERMEDIÁRIO 2", "C1 - AVANÇADO 1", "C2 - AVANÇADO 2"]; const OPCOES_DIAS = ["", "SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SÁBADO", "DOMINGO"]; 
+          
+          google.script.run.withFailureHandler(function(err) { document.getElementById('prof-turmas').innerHTML = "Erro ao carregar turmas: " + err.message; }).withSuccessHandler(function(dStr) { 
+              var d = JSON.parse(dStr); if(d) { var configProf = { 1: { tipo: 'select', opcoes: OPCOES_STATUS_T }, 2: { tipo: 'select', opcoes: OPCOES_NIVEL, isNivel: true }, 3: { tipo: 'texto' }, 4: { tipo: 'select', opcoes: OPCOES_DIAS }, 5: { tipo: 'select', opcoes: OPCOES_DIAS }, 6: { tipo: 'select', opcoes: OPCOES_DIAS }, 7: { tipo: 'texto' }, 8: { tipo: 'texto' }, 9: { tipo: 'texto' }, 10: { tipo: 'texto' } }; document.getElementById('prof-turmas').innerHTML = gerarTabelaHTMLProf(d.configTurmas, configProf, 2, [3,4,5,6], 'salvarTurmas'); } 
+          }).getDadosProfessor(meuTokenSeguranca); 
+          
+          google.script.run.withFailureHandler(function(err) { document.getElementById('dados-alunos').innerHTML = "Erro ao carregar alunos: " + err.message; }).withSuccessHandler(function(dStr) { 
+              var d = JSON.parse(dStr); var configAlunos = { 6: { tipo: 'texto' }, 7: { tipo: 'select', opcoes: OPCOES_TURMA } }; if(d) document.getElementById('dados-alunos').innerHTML = gerarTabelaHTMLProf(d, configAlunos, 1, [], 'salvarAlunos'); 
+          }).getDadosAlunos(meuTokenSeguranca); 
+          
+          google.script.run.withFailureHandler(function(err) { console.log(err); }).withSuccessHandler(function(listaStr) { 
+              var lista = JSON.parse(listaStr); var sel = document.getElementById('seletor-dinamico-turmas'); var turmaAtual = sel.value; var htmlOpcoes = ""; var encontrou = false;
+              lista.forEach(function(t) { if (t === turmaAtual) encontrou = true; htmlOpcoes += "<option value='" + t + "'" + (t === turmaAtual ? " selected" : "") + ">" + t + "</option>"; }); 
+              if (encontrou && turmaAtual) { sel.innerHTML = "<option value='' disabled>Selecione uma turma...</option>" + htmlOpcoes; carregarMetricasDaTurmaProf(turmaAtual); } else { sel.innerHTML = "<option value='' disabled selected>Selecione uma turma...</option>" + htmlOpcoes; }
+          }).getListaTurmas(meuTokenSeguranca);
+          carregarFinanceiroProf(); 
+      }
+      
+      function gerarTabelaHTMLProf(matriz, configEdicao, linhaInicioEdicao, indicesCentralizados, autoSaveFunc) { 
+          indicesCentralizados = indicesCentralizados || []; autoSaveFunc = autoSaveFunc || ""; var onBlurAttr = autoSaveFunc ? " onblur='" + autoSaveFunc + "()'" : "";
+          if (!matriz || matriz.length === 0) return "<p>Nenhum dado encontrado.</p>"; 
+          var html = "<table>"; 
+          for (var i = 0; i < matriz.length; i++) { 
+              if (matriz[i].join("").trim() === "") continue; 
+              html += "<tr>"; 
+              for (var j = 0; j < matriz[i].length; j++) { 
+                  var classes = []; var config = (i >= linhaInicioEdicao && configEdicao) ? configEdicao[j] : undefined; 
+                  if (config) classes.push("coluna-editavel"); if (indicesCentralizados.includes(j)) classes.push("texto-centralizado"); var classString = classes.length > 0 ? " class='" + classes.join(" ") + "'" : ""; 
+                  if (i < linhaInicioEdicao) { 
+                      var tCab = String(matriz[i][j]).trim().toUpperCase(); 
+                      if (tCab === "AULAS SEMANAIS" || (tCab.includes("AULAS") && !tCab.includes("LINK") && !tCab.includes("GRAVADA"))) { html += "<th" + classString + " colspan='3'>" + matriz[i][j] + "</th>"; j += 2; } else { html += "<th" + classString + ">" + matriz[i][j] + "</th>"; } 
+                  } else { 
+                      if (config && config.tipo === 'texto') { html += "<td" + classString + " contenteditable='true'" + onBlurAttr + ">" + matriz[i][j] + "</td>"; } else if (config && config.tipo === 'select') { var onChangeAction = autoSaveFunc ? autoSaveFunc + "()" : ""; var extraAttr = config.isNivel ? " onchange='this.style.backgroundColor=\"#fff\"; " + onChangeAction + "'" : (onChangeAction ? " onchange='" + onChangeAction + "'" : ""); html += "<td" + classString + "><select class='dropdown-editavel'" + extraAttr + ">"; config.opcoes.forEach(function(opt) { html += "<option value='" + opt + "'" + (String(matriz[i][j]).trim().toUpperCase() === opt.trim().toUpperCase() ? " selected" : "") + ">" + (opt===""?"-":opt) + "</option>"; }); html += "</select></td>"; } else { html += "<td" + classString + ">" + matriz[i][j] + "</td>"; } 
+                  } 
+              } html += "</tr>"; 
+          } return html + "</table>"; 
+      }
+      
+      function extrairValor(celula) { var sel = celula.querySelector("select"); return sel ? sel.value : celula.innerText.trim(); }
+      
+      function salvarTurmas() { 
+          var btn = document.getElementById("btnSalvarTurmas"); btn.innerText = "⏳ Salvando..."; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black"; var mat = []; 
+          document.querySelectorAll("#prof-turmas table tr").forEach(function(tr) { var cols = tr.querySelectorAll("td"); if(cols.length === 0) return; var l = [cols[0].innerText.trim()]; for(var j=1; j<cols.length; j++) l.push(extrairValor(cols[j])); mat.push(l); }); 
+          google.script.run.withFailureHandler(function(e){ alert("Erro ao salvar turmas: " + e.message); btn.innerText = "❌ Erro"; btn.style.backgroundColor = "var(--vermelho-oficial)"; btn.style.color = "white"; }).withSuccessHandler(function() { btn.innerText = "✅ Salvo!"; btn.style.backgroundColor = "var(--verde-forte)"; btn.style.color = "white"; setTimeout(function() { btn.innerText = "💾 Salvo Automático"; btn.style.backgroundColor = "var(--accent)"; }, 2000); }).salvarTurmasProf(meuTokenSeguranca, mat); 
+      }
+      
+      function salvarAlunos() { 
+          var btn = document.getElementById("btnSalvarAlunos"); btn.innerText = "⏳ Salvando..."; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black"; var mat = []; 
+          document.querySelectorAll("#dados-alunos table tr").forEach(function(tr) { var cols = tr.querySelectorAll("td"); if(cols.length === 0) return; var l = [cols[0].innerText.trim()]; for(var j=1; j<cols.length; j++) l.push(extrairValor(cols[j])); mat.push(l); }); 
+          google.script.run.withFailureHandler(function(e){ alert("Erro ao salvar alunos: " + e.message); btn.innerText = "❌ Erro"; btn.style.backgroundColor = "var(--vermelho-oficial)"; btn.style.color = "white"; }).withSuccessHandler(function() { btn.innerText = "✅ Salvo!"; btn.style.backgroundColor = "var(--verde-forte)"; btn.style.color = "white"; setTimeout(function() { btn.innerText = "💾 Salvo Automático"; btn.style.backgroundColor = "var(--accent)"; }, 2000); }).salvarAlunosProf(meuTokenSeguranca, mat); 
+      }
+      
+      function atualizarCorCrono(el) { var v = el.value.trim().toUpperCase(); el.style.fontWeight = 'bold'; if(v === 'FEITA') { el.style.backgroundColor = 'var(--verde-forte)'; el.style.color = 'white'; } else if(v === 'ESPERA') { el.style.backgroundColor = 'var(--amarelo)'; el.style.color = 'black'; } else if(v === '-') { el.style.backgroundColor = 'var(--vermelho-oficial)'; el.style.color = 'white'; } else { el.style.backgroundColor = '#fff'; el.style.color = 'black'; } }
+      
+      function salvarCronograma() { 
+          var turmaSelecionada = document.getElementById("seletor-dinamico-turmas").value; if (!turmaSelecionada) return; 
+          var btn = document.getElementById("btnSalvarCrono"); btn.innerText = "⏳ Salvando..."; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black"; var matrizStatus = []; document.querySelectorAll('.select-status-crono').forEach(function(sel) { matrizStatus.push([sel.value]); }); 
+          google.script.run.withFailureHandler(function(e){ btn.innerText = "❌ Erro"; btn.style.backgroundColor = "var(--vermelho-oficial)"; btn.style.color = "white"; }).withSuccessHandler(function() { btn.innerText = "✅ Salvo!"; btn.style.backgroundColor = "var(--verde-forte)"; btn.style.color = "white"; setTimeout(function() { btn.innerText = "💾 Salvo Automático"; btn.style.backgroundColor = "var(--accent)"; }, 2000); }).salvarStatusCronograma(meuTokenSeguranca, turmaSelecionada, matrizStatus); 
+      }
+      
+      function salvarMetricasTurmaAtual() { 
+          var turma = document.getElementById("seletor-dinamico-turmas").value; if (!turma) return; 
+          var num = document.getElementById('inputNumAlunos').value.trim() || "-"; var des = document.getElementById('inputDesempenho').value.trim() || "-"; var lnk = document.getElementById('inputLinkAulas').value.trim() || "-"; var grav = document.getElementById('inputAulasGravadas').value.trim() || "-"; 
+          var btn = document.getElementById("btnSalvarMetricasTurma"); btn.innerText = "⏳ Salvando..."; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black";
+          google.script.run.withFailureHandler(function(e){ btn.innerText = "❌ Erro"; btn.style.backgroundColor = "var(--vermelho-oficial)"; btn.style.color = "white"; }).withSuccessHandler(function() { btn.innerText = "✅ Salvo!"; btn.style.backgroundColor = "var(--verde-forte)"; btn.style.color = "white"; setTimeout(function() { btn.innerText = "💾 Salvo Automático"; btn.style.backgroundColor = "var(--accent)"; }, 1500); }).salvarMetricasUnicasTurma(meuTokenSeguranca, turma, num, des, lnk, grav); 
+      }
+      
+      function carregarMetricasDaTurmaProf(turma) { 
+          if(!turma) return; 
+          document.getElementById('turma-cabecalho').innerHTML = "⏳ Carregando..."; document.getElementById('metricas-extras-turma').innerHTML = ""; document.getElementById('turma-corrida-prof').innerHTML = "";
+          google.script.run.withFailureHandler(function(err) { document.getElementById('turma-cabecalho').innerHTML = "<p style='color:red;'>Erro: " + err.message + "</p>"; }).withSuccessHandler(function(dStr) { 
+              var d = JSON.parse(dStr); 
+              if (d) { 
+                  document.getElementById('turma-cabecalho').innerHTML = '<div class="metrica-box" style="border-color:var(--accent);"><strong>⚠️ Status:</strong><br> ' + d.cabecalho.status + '</div><div class="metrica-box" style="border-color:var(--accent);"><strong>⏰ Horário:</strong><br> ' + d.cabecalho.horario + '</div><div class="metrica-box" style="border-color:var(--accent);"><strong>📚 Nível:</strong><br> ' + d.cabecalho.nivel + '</div><div class="metrica-box" style="border-color:var(--accent);"><strong>📊 Porcentagem:</strong><br> ' + d.cabecalho.porcentagem + '</div>'; 
+                  var m = d.metricasProf; 
+                  var formatarInput = function(id, val, linkUrl, placeholder) { var btnHtml = (linkUrl && linkUrl.startsWith("http")) ? '<a href="' + linkUrl + '" target="_blank" style="margin-left:10px; padding:6px 12px; background:var(--accent); color:white; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px; white-space:nowrap;">Abrir ↗</a>' : ""; return '<div style="display:flex; margin-top:10px;"><input type="text" id="' + id + '" value="' + (val === '-' ? '' : val) + '" placeholder="' + placeholder + '" onblur="salvarMetricasTurmaAtual()" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px; font-size:13px; box-sizing:border-box;">' + btnHtml + '</div>'; }; 
+                  document.getElementById('metricas-extras-turma').innerHTML = '<div style="width:100%; margin-top:10px;"><div class="header-com-botao" style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;"><h3 style="margin:0;">⚙ Configurações Rápidas da Turma</h3><button class="btn-salvar" id="btnSalvarMetricasTurma" onclick="salvarMetricasTurmaAtual()" style="margin:0; padding:8px 15px; font-size:13px; max-width:250px; background: var(--accent);">💾 Salvo Automático</button></div><div class="metricas-container" style="margin-top:0;"><div class="metrica-box" style="border-color: var(--verde-forte);"><h3>👥 Alunos</h3>' + formatarInput('inputNumAlunos', m.numAlunos, null, 'Qtd') + '</div><div class="metrica-box" style="border-color: var(--laranja);"><h3>📈 Desempenho</h3>' + formatarInput('inputDesempenho', m.desempenho, null, 'Nota') + '</div><div class="metrica-box" style="border-color: var(--accent);"><h3>🔗 Link das Aulas</h3>' + formatarInput('inputLinkAulas', m.linkAulas, m.linkAulas, 'http://...') + '</div><div class="metrica-box" style="border-color: var(--vermelho-oficial);"><h3>🎥 Aulas Gravadas</h3>' + formatarInput('inputAulasGravadas', m.aulasGravadas, m.aulasGravadas, 'http://...') + '</div></div></div>'; 
+                  
+                  var alunosCorrida = d.alunos.slice().sort(function(a, b) { return (parseFloat(b.nota) || 0) - (parseFloat(a.nota) || 0); });
+                  var notasVal = alunosCorrida.map(function(a){ return parseFloat(a.nota) || 0; });
+                  var maxNota = notasVal.length > 0 ? Math.max.apply(null, notasVal) : 10; var minNota = notasVal.length > 0 ? Math.min.apply(null, notasVal) : 0;
+                  if(maxNota < 10) maxNota = 10; if(minNota > 0) minNota = 0; var range = maxNota - minNota; if(range === 0) range = 1;
+                  var chartHtml = '<div class="card" style="margin-top:20px; border:1px solid #ddd; padding:20px; border-radius:8px;"><h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">🏆 Corrida de Notas da Turma</h3>';
+                  alunosCorrida.forEach(function(al) { var notaVal = parseFloat(al.nota) || 0; var widthPorc = ((notaVal - minNota) / range) * 100; var corSolid = (al.cor && al.cor.startsWith('#')) ? al.cor : '#ccc'; chartHtml += '<div style="margin-bottom:15px;"><div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:5px; color:#333;"><span>' + al.nome + '</span><span>' + notaVal + ' pts</span></div><div style="width:100%; background:#eee; border-radius:10px; height:20px; overflow:hidden; border:1px solid #ddd;"><div style="width:' + widthPorc + '%; background:' + corSolid + '; height:100%; border-radius:10px; transition:0.8s;"></div></div></div>'; });
+                  chartHtml += '</div>'; document.getElementById('turma-corrida-prof').innerHTML = chartHtml;
+                  
+                  var hA = "<table><tr><th>Duração</th><th>Data</th><th>Aula</th><th>Status</th></tr>"; 
+                  d.cronograma.forEach(function(l, idx) { var valStatus = String(l[3] || "").trim().toUpperCase(); var selCrono = '<select class="dropdown-editavel select-status-crono" onchange="atualizarCorCrono(this); salvarCronograma()"><option value="FEITA" ' + (valStatus==="FEITA"?"selected":"") + '>FEITA</option><option value="ESPERA" ' + (valStatus==="ESPERA"?"selected":"") + '>ESPERA</option><option value="-" ' + (valStatus==="-"?"selected":"") + '>-</option></select>'; hA += '<tr><td>' + l[0] + '</td><td>' + l[1] + '</td><td style="text-align:left;">' + l[2] + '</td><td>' + selCrono + '</td></tr>'; }); hA += "</table>"; 
+                  document.getElementById('turma-cronograma').innerHTML = hA; document.querySelectorAll('.select-status-crono').forEach(atualizarCorCrono); 
+                  
+                  var hAl = ""; 
+                  d.alunos.forEach(function(al, idx) { 
+                      var sId = "aluno_" + idx; var pal = al.palavras.map(function(p) { return '<li><span>' + p + '</span> <button onclick="removerPalavra(this, \'' + sId + '\')">X</button></li>'; }).join(""); 
+                      var fundoCard = (al.cor && al.cor.startsWith('#')) ? al.cor + '40' : '#ffffff';
+                      hAl += '<div class="aluno-card" id="card-' + sId + '" data-idaluno="' + al.matricula + '" style="background-color: ' + fundoCard + ';"><h4>' + al.numero + ' - ' + al.nome + '</h4><p><strong>Matrícula:</strong> ' + al.matricula + '</p><p><strong>Responsável:</strong> ' + al.responsavel + '</p><label>Frequência:</label><input type="text" class="freq-input" value="' + al.frequencia + '" onblur="salvarFichaAluno(\'' + sId + '\')"><label>Nota (Pontos):</label><div style="display:flex; gap:5px;"><button type="button" onclick="mudarNota(this, -1, \'' + sId + '\')" style="padding:6px 15px; background:var(--vermelho-oficial); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">-</button><input type="number" class="nota-input" value="' + al.nota + '" style="text-align:center; flex:1;" onblur="salvarFichaAluno(\'' + sId + '\')"><button type="button" onclick="mudarNota(this, 1, \'' + sId + '\')" style="padding:6px 15px; background:var(--verde-forte); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">+</button></div><label style="margin-top:5px; display:block;">Relatório:</label><textarea class="rel-input" onblur="salvarFichaAluno(\'' + sId + '\')">' + al.relatorio + '</textarea><label>Mensagem:</label><textarea class="msg-input" onblur="salvarFichaAluno(\'' + sId + '\')">' + al.mensagem + '</textarea><div style="margin-top:15px; font-size:11px; background:#f0f4f8; padding:8px; border-radius:4px; border:1px solid #c7ccea; color:#333;"><strong>🏷️ Novas Missões Inteligentes:</strong><br>Adicione palavras abaixo. O sistema preenche as respostas sozinho se deixar o campo "Resposta" vazio!<br></div><div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;"><strong>📝 Lista de Palavras:</strong><ul class="lista-palavras" id="palavras-' + sId + '">' + pal + '</ul><div class="add-palavra-box" style="background:#f9fbfc; border:1px solid #ddd; padding:10px; border-radius:6px; margin-top:5px;"><select id="tipo-missao-' + sId + '" style="width:100%; margin-bottom:5px; padding:6px; font-size:13px; border-radius:4px; border:1px solid #ccc; font-weight:bold;"><option value="[TRAD]">Tradução (Inglês ➔ Port)</option><option value="[TRAD_EN]">Tradução Inversa (Port ➔ Inglês)</option><option value="[AUDIO]">Listening (Ouvir e Escrever)</option><option value="[SPEAK]">Speaking (Pronunciar no Microfone)</option><option value="[ANT]">Antônimo (Oposto)</option><option value="[SIN]">Sinônimo (Semelhante)</option><option value="[COMP]">Completar Letras Ocultas</option><option value="[FRASE]">Criar Frase Livre</option><option value="[DES]">Desembaralhar Palavra</option></select><input type="text" id="nova-palavra-' + sId + '" placeholder="Palavra Principal..." style="width:100%; margin-bottom:5px; padding:8px; font-size:13px; border-radius:4px; border:1px solid #ccc;"><input type="text" id="resp-palavra-' + sId + '" placeholder="Gabarito (Vazio p/ automático ou separe por vírgula)" style="width:100%; margin-bottom:5px; padding:8px; font-size:13px; border-radius:4px; border:1px solid #ccc;"><p style="font-size:10px; color:#555; margin:0 0 10px 0;">💡 <strong>Dica:</strong> Aceite múltiplas respostas separando-as por vírgula. Se preferir, deixe em branco e o sistema buscará a resposta automaticamente!</p><button class="btn-add" style="width:100%; padding:10px; background:var(--accent); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="adicionarPalavraNova(\'' + sId + '\')">➕ Adicionar Missão</button></div></div><button class="btn-salvar btn-salvar-ficha" style="margin-top:15px; width:100%; background: var(--accent);" onclick="salvarFichaAluno(\'' + sId + '\')">💾 Salvo Automático</button></div>'; 
+                  }); 
+                  document.getElementById('turma-alunos').innerHTML = hAl || "<p>Nenhum aluno nesta turma.</p>"; 
+              } 
+          }).getDadosDaTurma(meuTokenSeguranca, turma); 
+      }
+      
+      function mudarNota(btn, delta, sId) { var input = btn.parentElement.querySelector('.nota-input'); var val = parseFloat(input.value) || 0; input.value = val + delta; salvarFichaAluno(sId); }
+      function adicionarPalavraNova(sId) {
+          var tipo = document.getElementById("tipo-missao-" + sId).value; var word = document.getElementById("nova-palavra-" + sId).value.trim(); var ans = document.getElementById("resp-palavra-" + sId).value.trim(); var u = document.getElementById("palavras-" + sId); var btn = document.querySelector("#card-" + sId + " .btn-add");
+          if (!word) return;
+          if ((tipo === "[TRAD]" || tipo === "[TRAD_EN]" || tipo === "[ANT]" || tipo === "[SIN]") && ans === "") {
+              btn.innerText = "⏳ Buscando..."; var url = "";
+              if (tipo === "[ANT]") url = "https://api.datamuse.com/words?rel_ant=" + encodeURIComponent(word); else if (tipo === "[SIN]") url = "https://api.datamuse.com/words?rel_syn=" + encodeURIComponent(word); else { var langPair = tipo === "[TRAD]" ? "en|pt" : "pt|en"; url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(word) + "&langpair=" + langPair; }
+              fetch(url).then(function(r){ return r.json(); }).then(function(data) { if (tipo === "[ANT]" || tipo === "[SIN]") { if(data && data.length > 0) ans = data[0].word; } else { if(data && data.responseData && data.responseData.translatedText) ans = data.responseData.translatedText.toLowerCase(); } concluirAdicao(sId, tipo, word, ans, u, btn); }).catch(function(e) { concluirAdicao(sId, tipo, word, ans, u, btn); });
+          } else { concluirAdicao(sId, tipo, word, ans, u, btn); }
+      }
+      function concluirAdicao(sId, tipo, word, ans, u, btn) { var formatado = (tipo === "[DES]" || tipo === "[COMP]" || tipo === "[FRASE]" || tipo === "[AUDIO]" || tipo === "[SPEAK]") ? (tipo + " " + word) : (tipo + " " + word + " | " + ans); u.innerHTML += '<li><span>' + formatado + '</span> <button onclick="removerPalavra(this, \'' + sId + '\')">X</button></li>'; document.getElementById("nova-palavra-" + sId).value = ""; document.getElementById("resp-palavra-" + sId).value = ""; u.scrollTop = u.scrollHeight; if(btn) btn.innerText = "➕ Adicionar Missão"; salvarFichaAluno(sId); }
+      function removerPalavra(btn, sId) { btn.parentElement.remove(); salvarFichaAluno(sId); }
+      
+      function salvarFichaAluno(sId) { 
+          var c = document.getElementById("card-" + sId); var b = c.querySelector(".btn-salvar-ficha"); var t = document.getElementById("seletor-dinamico-turmas").value; var p = []; c.querySelectorAll(".lista-palavras li span").forEach(function(n) { p.push(n.innerText.trim()); }); 
+          b.innerText = "⏳ Salvando..."; b.style.backgroundColor = "var(--amarelo)"; b.style.color = "black"; var idAluno = c.getAttribute("data-idaluno");
+          google.script.run.withFailureHandler(function(err) { b.innerText = "❌ Erro"; b.style.backgroundColor = "var(--vermelho-oficial)"; b.style.color = "white"; alert("Erro ao salvar: " + err.message); }).withSuccessHandler(function(s) { b.innerText = s ? "✅ Salvo!" : "❌ Erro"; b.style.backgroundColor = s ? "var(--verde-forte)" : "var(--vermelho-oficial)"; b.style.color = "white"; setTimeout(function() { b.innerText = "💾 Salvo Automático"; b.style.backgroundColor = "var(--accent)"; }, 2500); }).salvarDadosAlunoTurma(meuTokenSeguranca, t, idAluno, c.querySelector(".freq-input").value, c.querySelector(".nota-input").value, c.querySelector(".rel-input").value, c.querySelector(".msg-input").value, p); 
+      }
+      
+      function carregarFinanceiroProf() { 
+          document.getElementById('tabela-financeiro').innerHTML = '<tr><td colspan="21">⏳ Carregando planilhas financeiras...</td></tr>'; 
+          google.script.run.withFailureHandler(function(err) { document.getElementById('tabela-financeiro').innerHTML = '<tr><td colspan="21" style="color:red;">Erro no financeiro: ' + err.message + '</td></tr>'; }).withSuccessHandler(function(dStr) { 
+              var d = JSON.parse(dStr); dadosFinanceirosProf = d.alunos; 
+              document.getElementById('fin-codigo').innerText = d.cabecalho.codigo; document.getElementById('fin-nomeProf').innerText = d.cabecalho.professor; document.getElementById('fin-pix').innerText = d.cabecalho.pix; document.getElementById('fin-alunos').innerText = d.cabecalho.totalAlunos; document.getElementById('fin-esperado').innerText = d.cabecalho.valorEsperado; document.getElementById('fin-atrasado').innerText = d.cabecalho.valorAtrasado; document.getElementById('fin-arrecadado').innerText = d.cabecalho.valorArrecadado; 
+              var tb = document.getElementById('tabela-financeiro'), h = ""; 
+              d.alunos.forEach(function(al, i) { 
+                  var textoAcao = '<div style="display:flex; gap:5px; width:100%; justify-content:center;"><button onclick="abrirModalMensagemFin(' + i + ')" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; display:flex; align-items:center;" title="Enviar Mensagem">✉💬</button><button onclick="abrirModalEdicaoProf(\'' + al.matricula + '\')" style="background:var(--amarelo); color:black; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; display:flex; align-items:center;" title="Editar Cadastro">✏️</button></div>';
+                  h += '<tr class="aluno-row" data-linha="' + al.linhaPlanilha + '"><td data-label="Ações">' + textoAcao + '</td><td data-label="Nº">' + al.numero + '</td><td data-label="Matrícula">' + al.matricula + '</td><td data-label="Responsável" class="col-resp-sticky" style="text-align:left;font-weight:bold;">' + al.nomeResp + '</td><td data-label="Aluno(s)" style="text-align:left;">' + al.nomeAluno + '</td><td data-label="Vencimento">' + al.vencimento + '</td><td data-label="Valor">R$ ' + al.valor + '</td><td data-label="Status Atual"><select id="status_' + al.linhaPlanilha + '" class="dropdown-editavel select-status" onchange="atualizarCorFin(this); salvarFinanceiro()">' + optStatusFin.map(function(o){ return '<option value="' + o + '" ' + (o===al.statusAtual?'selected':'') + '>' + o + '</option>'; }).join("") + '</select></td><td data-label="Próx. Mês"><select id="proxMes_' + al.linhaPlanilha + '" class="dropdown-editavel select-prox-mes" onchange="salvarFinanceiro()">' + optMesesAno.map(function(o){ return '<option value="' + o + '" ' + (String(o).toUpperCase()===String(al.proximoMes).toUpperCase()?'selected':'') + '>' + o + '</option>'; }).join("") + '</select></td>'; 
+                  var nomesMeses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                  for(var m=0; m<12; m++) { h += '<td data-label="' + nomesMeses[m] + '"><select id="mes_' + al.linhaPlanilha + '_' + m + '" class="dropdown-editavel select-mes" onchange="atualizarCorFin(this); salvarFinanceiro()">' + optPagFin.map(function(o){ return '<option value="' + o + '" ' + (o===al.meses[m]?'selected':'') + '>' + o + '</option>'; }).join("") + '</select></td>'; } h += '</tr>'; 
+              }); 
+              tb.innerHTML = h || "<tr><td colspan='21'>Nenhum dado encontrado.</td></tr>"; document.querySelectorAll('#tabela-financeiro select').forEach(atualizarCorFin); 
+          }).obterDadosFinanceiros(meuTokenSeguranca); 
+      }
+      
+      function atualizarCorFin(el) { 
+          var v = el.value.trim().toUpperCase(); el.style.fontWeight = 'bold'; el.style.background = '#fff'; el.style.color = '#000'; 
+          if (v === "MATRÍCULA ATIVA - MENSALIDADE EM DIA") { el.style.background = '#27ae60'; el.style.color = 'white'; } else if (v.includes("PENDENTE") && v.includes("ATIVA")) { el.style.background = '#f1c40f'; } else if (v.includes("INVÁLIDA")) { el.style.background = '#e74c3c'; el.style.color = 'white'; } else if (v === "DELETAR") { el.style.background = '#8e44ad'; el.style.color = 'white'; } else if(v === "PAGO") { el.style.background = '#6aa84f'; el.style.color = 'black'; } else if(v === "PENDENTE") { el.style.background = '#e06666'; el.style.color = 'black'; } else if(v === "PERDOADO") { el.style.background = '#f6b26b'; el.style.color = 'black'; } else if(v === "VERIFICAR") { el.style.background = '#cc0000'; el.style.color = 'white'; } else if(v === "INATIVO") { el.style.background = '#f3f3f3'; el.style.color = '#555'; } else if(v === "-") { el.style.background = '#ffffff'; el.style.color = '#000'; }
+      }
+      
+      function salvarFinanceiro() { 
+          var b = document.getElementById('btnSalvarFin'); b.innerText = "⏳ Salvando..."; b.style.backgroundColor = "var(--amarelo)"; b.style.color = "black"; var atu = []; 
+          document.querySelectorAll('.aluno-row').forEach(function(tr) { var l = tr.getAttribute('data-linha'), m = []; for(var i=0; i<12; i++) m.push(document.getElementById('mes_' + l + '_' + i).value); atu.push({ linha: l, status: document.getElementById('status_' + l).value, proxMes: document.getElementById('proxMes_' + l).value, meses: m }); }); 
+          google.script.run.withFailureHandler(function(err){ b.innerText = "❌ Erro"; b.style.backgroundColor = "var(--vermelho-oficial)"; b.style.color = "white"; alert("Erro: " + err.message); }).withSuccessHandler(function(r) { b.innerText = "✅ Salvo!"; b.style.backgroundColor = "var(--verde-forte)"; b.style.color = "white"; setTimeout(function() { b.innerText = "💾 Salvo Automático"; b.style.backgroundColor = "var(--accent)"; }, 2000); }).atualizarVariosAlunos(meuTokenSeguranca, atu); 
+      }
+      
+      function abrirModalMensagemFin(idx) {
+          var al = dadosFinanceirosProf[idx]; var emailsFormatados = String(al.emailContato || "").split(/[\s;,]+/).map(function(e) { return e.trim().replace(/\.$/, ''); }).filter(function(e) { return e.length > 0; }).join(", "); document.getElementById('emailDestinoFin').value = emailsFormatados; document.getElementById('whatsappDestinoFin').value = al.telefoneContato || ""; document.getElementById('emailAssuntoFin').value = "ON ENGLISH - Atualização Financeira (" + al.nomeAluno + ")"; document.getElementById('emailMensagemFin').value = al.msgPersonalizada ? al.msgPersonalizada : al.msgPadrao; document.getElementById('modalMensagemFin').style.display = 'flex';
+      }
+
+      function dispararEmailIndividual() {
+          var email = document.getElementById('emailDestinoFin').value.trim();
+          var assunto = document.getElementById('emailAssuntoFin').value.trim();
+          var msg = document.getElementById('emailMensagemFin').value.trim();
+          
+          if (!email || !msg) return alert("E-mail e Mensagem são obrigatórios para envio por e-mail!");
+          
+          var btn = document.getElementById('btnEnviarEmailInd');
+          btn.innerText = "⏳ Enviando...";
+          
+          google.script.run.withFailureHandler(function(err) {
+              alert("Erro de conexão: " + err.message);
+              btn.innerText = "🚀 Enviar E-mail";
+          }).withSuccessHandler(function(resStr) {
+              var res = JSON.parse(resStr);
+              if (res.erros && res.erros.length > 0) {
+                  alert("⚠️ Atenção:\n" + res.erros.join("\n"));
+                  btn.innerText = "🚀 Enviar E-mail";
+              } else {
+                  alert("✅ E-mail oficial enviado com sucesso para " + email + "!");
+                  setTimeout(function() {
+                      document.getElementById('modalMensagemFin').style.display = 'none';
+                      btn.innerText = "🚀 Enviar E-mail";
+                  }, 1500);
+              }
+          }).enviarEmailsAlunos(meuTokenSeguranca, [{
+              email: email, 
+              assunto: assunto, 
+              mensagem: msg.replace(/\n/g, "<br>")
+          }]);
+      }
+      
+      function dispararWhatsAppIndividual() {
+          var telefone = document.getElementById('whatsappDestinoFin').value.trim(); var msg = document.getElementById('emailMensagemFin').value.trim(); if(!telefone || !msg) return alert("O Número de WhatsApp e a Mensagem são obrigatórios!");
+          var phoneLimpo = telefone.replace(/\D/g, ''); if (phoneLimpo.length === 10 || phoneLimpo.length === 11) { phoneLimpo = '55' + phoneLimpo; } var msgCodificada = encodeURIComponent(msg); var linkZap = "https://api.whatsapp.com/send?phone=" + phoneLimpo + "&text=" + msgCodificada; window.open(linkZap, '_blank'); document.getElementById('modalMensagemFin').style.display = 'none';
+      }
+
+      function dispararTodosEmailsFin() {
+          var envios = [];
+          dadosFinanceirosProf.forEach(function(al) {
+              var emailLimpo = String(al.emailContato || "").split(/[\s;,]+/).map(function(e) { 
+                  return e.trim().replace(/\.$/, ''); 
+              }).filter(function(e) { return e.length > 0; }).join(",");
+              
+              if (emailLimpo.includes("@")) {
+                  var msg = al.msgPersonalizada ? al.msgPersonalizada : al.msgPadrao;
+                  if (msg && String(msg).trim() !== "") {
+                      envios.push({ 
+                          email: emailLimpo, 
+                          assunto: "ON ENGLISH - Atualização Financeira (" + al.nomeAluno + ")", 
+                          mensagem: String(msg).replace(/\n/g, "<br>") 
+                      });
+                  }
+              }
+          });
+          if (envios.length === 0) {
+              alert("Nenhum aluno com e-mail e mensagem válidos encontrados.");
+              return;
+          }
+          if (confirm("Deseja disparar e-mails para " + envios.length + " alunos agora? O servidor validará cada e-mail com a lista oficial de alunos cadastrados.")) {
+              var btn = document.querySelector('button[onclick="dispararTodosEmailsFin()"]');
+              var txtOriginal = btn.innerText;
+              btn.innerText = "⏳ Disparando...";
+              google.script.run.withFailureHandler(function(err) {
+                  alert("Erro: " + err.message);
+                  btn.innerText = txtOriginal;
+              }).withSuccessHandler(function(resStr) {
+                  var res = JSON.parse(resStr);
+                  if (res.erros && res.erros.length > 0) {
+                      alert("⚠️ Relatório de Disparo:\n" + res.erros.join("\n") + "\n\nE-mails enviados com sucesso: " + res.sucessos);
+                  } else {
+                      alert("✅ " + res.sucessos + " e-mails verificados e disparados com sucesso!");
+                  }
+                  btn.innerText = txtOriginal;
+              }).enviarEmailsAlunos(meuTokenSeguranca, envios);
+          }
+      }
+      function abrirModalEdicaoProf(matricula) {
+          document.getElementById('modalEdicaoCadastroProf').style.display = 'flex'; document.getElementById('formEditCadastroProfLoader').style.display = 'block'; document.getElementById('formEditCadastroProfBody').style.display = 'none';
+          google.script.run.withFailureHandler(function(err) { document.getElementById('formEditCadastroProfLoader').innerHTML = "❌ Erro: " + err.message; }).withSuccessHandler(function(resStr) {
+              var res = JSON.parse(resStr);
+              if(res.sucesso) { var c = res.cadastro; document.getElementById('editCadProfLinha').value = c.linha; document.getElementById('editCadProf_B').innerText = c.matricula; document.getElementById('editCadProf_C').innerText = c.dataMatricula; document.getElementById('editCadProf_D').value = c.valorMatricula; document.getElementById('editCadProf_E').value = c.qtdAlunos; document.getElementById('editCadProf_F').value = c.nomeResp; document.getElementById('editCadProf_G').value = c.nomeAluno; document.getElementById('editCadProf_H').value = c.aniversario; document.getElementById('editCadProf_I').value = c.cpf; document.getElementById('editCadProf_J').value = c.email; document.getElementById('editCadProf_K').value = c.telefone; document.getElementById('editCadProf_L').value = c.cep; document.getElementById('editCadProf_M').value = c.endereco; document.getElementById('editCadProf_N').value = c.paisEstado; document.getElementById('editCadProf_O').value = c.instagram; document.getElementById('editCadProf_P').value = c.tiktok; document.getElementById('viewCadProf_Q').innerText = c.comoConheceu || "-"; if(c.contratoLink) { document.getElementById('viewCadProf_R').innerHTML = '<a href="' + c.contratoLink + '" target="_blank" style="color:var(--accent); text-decoration:none;">📄 Acessar Arquivo</a>'; } else { document.getElementById('viewCadProf_R').innerText = c.contratoTexto || "-"; } document.getElementById('formEditCadastroProfLoader').style.display = 'none'; document.getElementById('formEditCadastroProfBody').style.display = 'block'; } else { document.getElementById('formEditCadastroProfLoader').innerHTML = "❌ Erro: " + res.erro; }
+          }).getDadosCompletosCadastroProf(meuTokenSeguranca, matricula);
+      }
+      function salvarEdicaoCadastroProf() {
+          var btn = document.getElementById('btnSalvarCadProfSubmit'); btn.innerText = "⏳ Salvando..."; btn.style.backgroundColor = "var(--amarelo)"; btn.style.color = "black";
+          var dados = { valorMatricula: document.getElementById('editCadProf_D').value, qtdAlunos: document.getElementById('editCadProf_E').value, nomeResp: document.getElementById('editCadProf_F').value, nomeAluno: document.getElementById('editCadProf_G').value, aniversario: document.getElementById('editCadProf_H').value, cpf: document.getElementById('editCadProf_I').value, email: document.getElementById('editCadProf_J').value, telefone: document.getElementById('editCadProf_K').value, cep: document.getElementById('editCadProf_L').value, endereco: document.getElementById('editCadProf_M').value, paisEstado: document.getElementById('editCadProf_N').value, instagram: document.getElementById('editCadProf_O').value, tiktok: document.getElementById('editCadProf_P').value }; var linha = document.getElementById('editCadProfLinha').value;
+          google.script.run.withFailureHandler(function(err) { alert("Erro ao salvar: " + err.message); btn.innerText = "💾 Salvar Alterações"; btn.style.backgroundColor = "var(--accent)"; btn.style.color = "white"; }).withSuccessHandler(function(res) {
+              if (res.sucesso) { btn.innerText = "✅ Salvo!"; btn.style.backgroundColor = "var(--verde-forte)"; btn.style.color = "white"; setTimeout(function() { document.getElementById('modalEdicaoCadastroProf').style.display = 'none'; btn.innerText = "💾 Salvar Alterações"; btn.style.backgroundColor = "var(--accent)"; }, 1500); carregarFinanceiroProf(); } else { alert("Erro: " + res.erro); btn.innerText = "💾 Salvar Alterações"; btn.style.backgroundColor = "var(--accent)"; btn.style.color = "white"; }
+          }).salvarEdicaoCadastroCompleto(meuTokenSeguranca, linha, dados);
+      }
+    </script>
+  </body>
+</html>
